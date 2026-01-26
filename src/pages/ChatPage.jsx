@@ -1,0 +1,944 @@
+import { motion } from 'framer-motion';
+import { MessageSquare, Send, Loader2, Users, Lock, Trash2, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase, getMessages, sendMessage, deleteMessage } from '../lib/supabase';
+import GuestGuard from '../components/GuestGuard';
+import LoginModal from '../components/LoginModal';
+import RegisterModal from '../components/RegisterModal';
+import UserProfileModal from '../components/UserProfileModal';
+
+const ADMIN_EMAILS = ['andrefilipoua@gmail.com', 'test@example.com', 'admin@berlin-app.com'];
+
+export default function ChatPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [messageText, setMessageText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(1);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [showGuestGuard, setShowGuestGuard] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const channelRef = useRef(null);
+  const inputRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const realtimeRetryCountRef = useRef(0);
+  const mountedRef = useRef(true);
+  const isInitialLoadRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    let cancelled = false;
+
+    const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+
+    const run = async () => {
+      try {
+        await Promise.race([
+          (async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const currentUser = session?.user ?? null;
+            if (cancelled) return;
+            setUser(currentUser);
+
+            if (!currentUser) {
+              setLoading(false);
+              setShowGuestGuard(true);
+              return;
+            }
+
+            await loadProfile(currentUser.id);
+            if (cancelled) return;
+            await loadMessages();
+          })(),
+          timeout(12000),
+        ]);
+      } catch (e) {
+        if (cancelled) return;
+        console.warn('Chat init error or timeout:', e);
+        setMessages([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    run();
+
+    const safety = setTimeout(() => {
+      if (!cancelled) setLoading((prev) => (prev ? false : prev));
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(safety);
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Real-time підписка тільки для авторизованих; обмеження ретраїв
+  useEffect(() => {
+    if (!user?.id) return;
+
+    realtimeRetryCountRef.current = 0;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = setupRealtimeChannel(user);
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        // Видаляємо presence перед видаленням каналу
+        channelRef.current.untrack();
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [user?.id, profile?.full_name]);
+
+  // Оновлюємо presence коли змінюється профіль
+  useEffect(() => {
+    if (channelRef.current && user?.id && profile?.full_name) {
+      channelRef.current.track({
+        user_id: user.id,
+        full_name: profile.full_name,
+        online_at: new Date().toISOString(),
+      });
+    }
+  }, [profile?.full_name, user?.id]);
+
+  useEffect(() => {
+    // Використовуємо розумний scroll
+    smartScrollToBottom();
+  }, [messages]);
+
+  // Прокручуємо вгору при завантаженні сторінки чату або переході на неї
+  useEffect(() => {
+    // Встановлюємо прапорець, що це початкове завантаження
+    isInitialLoadRef.current = true;
+    
+    // Прокручуємо window вгору одразу
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
+    // Невелика затримка для того, щоб контейнер встиг відрендеритися
+    const timer = setTimeout(() => {
+      // Прокручуємо контейнер повідомлень вгору (якщо він існує)
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+        console.log('✅ Scrolled chat container to top');
+      } else {
+        console.log('⚠️ messagesContainerRef.current is null');
+      }
+      
+      // Після прокрутки вгору, через деякий час скидаємо прапорець
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]); // При зміні маршруту
+
+  // Закриваємо emoji picker при кліку поза ним
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showEmojiPicker]);
+
+  const loadProfile = async (userId) => {
+    try {
+      console.log('👤 Loading user profile...');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('❌ Error loading profile:', error);
+        return;
+      }
+      
+      if (data) {
+        console.log('✅ Profile loaded:', {
+          full_name: data.full_name || '(not set)',
+          district: data.district || '(not set)',
+          is_admin: data.is_admin || false,
+        });
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('❌ Exception loading profile:', error);
+    }
+  };
+
+  const loadMessages = async () => {
+    try {
+      setLoading(true);
+      const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+      const data = await Promise.race([getMessages(100), timeout(10000)]);
+      setMessages(Array.isArray(data) ? data : []);
+      setTimeout(() => scrollToBottom(), 300);
+    } catch (e) {
+      console.warn('loadMessages error or timeout:', e);
+      setMessages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setupRealtimeChannel = (currentUser) => {
+    console.log('📡 Setting up real-time channel for:', currentUser?.id);
+    
+    const channel = supabase
+      .channel('public:messages', {
+        config: {
+          broadcast: { self: false },
+          presence: { 
+            key: currentUser?.id,
+            events: {
+              join: true,
+              leave: true,
+            }
+          },
+        },
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        async (payload) => {
+          console.log('🔥🔥🔥 НОВЕ ПОВІДОМЛЕННЯ ОТРИМАНО:', payload.new);
+          
+          if (payload.new.user_id === currentUser?.id) {
+            console.log('💡 Своє повідомлення, оновлюємо ID...');
+            setMessages(prev => {
+              const hasOptimistic = prev.some(m => m._optimistic && m.content === payload.new.content);
+              if (hasOptimistic) {
+                return prev.map(msg => 
+                  msg._optimistic && msg.content === payload.new.content
+                    ? { ...msg, id: payload.new.id, _optimistic: false }
+                    : msg
+                );
+              }
+              return prev;
+            });
+            return;
+          }
+          
+          console.log('👥 Чуже повідомлення - завантажуємо дані автора...');
+          
+          try {
+            // Отримуємо дані профілю
+            const { data: profileData, error: pError } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url, district, is_admin')
+              .eq('id', payload.new.user_id)
+              .single();
+            
+            if (pError) console.error('❌ Помилка завантаження профілю автора:', pError);
+
+            let replyData = null;
+            if (payload.new.reply_to_id) {
+              const { data: reply } = await supabase
+                .from('messages')
+                .select('id, author_name, content')
+                .eq('id', payload.new.reply_to_id)
+                .single();
+              replyData = reply;
+            }
+            
+            const fullMessage = {
+              ...payload.new,
+              profiles: profileData,
+              reply_to: replyData,
+            };
+            
+            setMessages(prev => {
+              if (prev.some(m => m.id === fullMessage.id)) return prev;
+              const newList = [...prev, fullMessage];
+              // Сортуємо за часом на випадок затримок мережі
+              return newList.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            });
+            
+            setTimeout(() => scrollToBottom(), 200);
+          } catch (error) {
+            console.error('❌ Помилка обробки Realtime:', error);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('🗑️ Видалення через Realtime:', payload.old.id);
+          setMessages(current => current.filter(m => m.id !== payload.old.id));
+        }
+      )
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const users = Object.values(state).flat();
+        setOnlineUsers(users);
+        setOnlineCount(users.length);
+        console.log('👥 Online users:', users.length, users);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('👋 User joined:', key);
+        const state = channel.presenceState();
+        const users = Object.values(state).flat();
+        setOnlineUsers(users);
+        setOnlineCount(users.length);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('👋 User left:', key);
+        const state = channel.presenceState();
+        const users = Object.values(state).flat();
+        setOnlineUsers(users);
+        setOnlineCount(users.length);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          realtimeRetryCountRef.current = 0;
+          // Відправляємо presence після підписки
+          await channel.track({
+            user_id: currentUser?.id,
+            full_name: profile?.full_name || currentUser?.email?.split('@')[0] || 'Користувач',
+            online_at: new Date().toISOString(),
+          });
+        }
+        if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && mountedRef.current) {
+          const n = realtimeRetryCountRef.current + 1;
+          realtimeRetryCountRef.current = n;
+          if (n <= 3) {
+            setTimeout(() => {
+              if (!mountedRef.current) return;
+              if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
+              }
+              channelRef.current = setupRealtimeChannel(currentUser);
+            }, 5000);
+          }
+        }
+      });
+
+    return channel;
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSendMessage = async () => {
+    console.log('📤 Attempting to send message...');
+    
+    if (!messageText.trim()) {
+      console.warn('⚠️ Message text is empty');
+      return;
+    }
+    
+    if (!user) {
+      console.error('❌ User is not authenticated');
+      alert('Ви не авторизовані. Будь ласка, увійдіть в систему.');
+      return;
+    }
+
+    const messageContent = messageText.trim();
+    const authorName = profile?.full_name || user.email?.split('@')[0] || 'Гість';
+    
+    // Створюємо optimistic повідомлення для миттєвого відображення
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`, // Тимчасовий ID
+      user_id: user.id,
+      author_name: authorName,
+      content: messageContent,
+      created_at: new Date().toISOString(),
+      reply_to_id: replyTo?.id || null,
+      reply_to: replyTo ? {
+        id: replyTo.id,
+        author_name: replyTo.author,
+        content: replyTo.content,
+      } : null,
+      profiles: profile ? {
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        district: profile.district,
+        is_admin: profile.is_admin,
+      } : null,
+      _optimistic: true, // Позначка що це optimistic update
+    };
+
+    try {
+      setSending(true);
+      
+      console.log('💡 Adding optimistic message to UI...');
+      // Додаємо повідомлення ОДРАЗУ в UI (optimistic update)
+      setMessages(prev => [...prev, optimisticMessage]);
+      setMessageText('');
+      setReplyTo(null); // Очищаємо reply
+      
+      // Прокручуємо вниз
+      setTimeout(() => scrollToBottom(), 50);
+      
+      const messageData = {
+        user_id: user.id,
+        author_name: authorName,
+        content: messageContent,
+        reply_to_id: replyTo?.id || null,
+      };
+      
+      console.log('📝 Message data to send:', {
+        user_id: messageData.user_id,
+        author_name: messageData.author_name,
+        content_length: messageData.content.length,
+      });
+      
+      console.log('🚀 Sending to Supabase...');
+      const result = await sendMessage(messageData);
+      console.log('✅ Message sent successfully!', result);
+      
+      // Замінюємо тимчасове повідомлення на реальне з ID від бази
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === optimisticMessage.id 
+            ? { ...result, profiles: optimisticMessage.profiles, _optimistic: false }
+            : msg
+        )
+      );
+      
+    } catch (error) {
+      console.error('❌ ERROR SENDING MESSAGE:');
+      console.error('Error message:', error.message);
+      console.error('Error details:', error);
+      
+      // При помилці - видаляємо optimistic повідомлення
+      console.log('🗑️ Removing optimistic message due to error...');
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+      
+      alert(`Помилка при відправці повідомлення:\n${error.message}\n\nПеревірте Console (F12) для деталей.`);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!confirm('Видалити це повідомлення?')) return;
+
+    // Зберігаємо повідомлення для можливого rollback
+    const messageToDelete = messages.find(m => m.id === messageId);
+    if (!messageToDelete) return;
+
+    try {
+      setDeletingMessageId(messageId);
+      
+      console.log('🗑️ Optimistic delete - removing from UI...');
+      // Optimistic delete - видаляємо одразу з UI
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      
+      console.log('🚀 Deleting from Supabase...');
+      await deleteMessage(messageId);
+      console.log('✅ Message deleted successfully');
+      
+    } catch (error) {
+      console.error('❌ Error deleting message:', error);
+      
+      // Rollback - повертаємо повідомлення на місце
+      console.log('↩️ Rolling back delete...');
+      setMessages(prev => {
+        const newMessages = [...prev, messageToDelete];
+        // Сортуємо по created_at щоб повернути на правильне місце
+        return newMessages.sort((a, b) => 
+          new Date(a.created_at) - new Date(b.created_at)
+        );
+      });
+      
+      alert('Помилка при видаленні повідомлення');
+    } finally {
+      setDeletingMessageId(null);
+    }
+  };
+
+  const handleReply = (message) => {
+    console.log('💬 Reply to message:', message.id);
+    setReplyTo({
+      id: message.id,
+      author: getAuthorName(message),
+      content: message.content,
+    });
+    // Фокус на поле вводу
+    inputRef.current?.focus();
+  };
+
+  const cancelReply = () => {
+    setReplyTo(null);
+  };
+
+  const handleEmojiClick = (emoji) => {
+    setMessageText(prev => prev + emoji);
+    setShowEmojiPicker(false); // Закриваємо picker після вибору
+    inputRef.current?.focus();
+  };
+
+  const isScrolledToBottom = () => {
+    if (!messagesContainerRef.current) return true;
+    const container = messagesContainerRef.current;
+    const threshold = 100; // 100px від низу вважається "внизу"
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+  };
+
+  const smartScrollToBottom = () => {
+    // Якщо це початкове завантаження сторінки, не прокручуємо вниз
+    if (isInitialLoadRef.current) {
+      console.log('⏸️ Skipping auto-scroll to bottom (initial load)');
+      return;
+    }
+    
+    // Якщо повідомлень мало або користувач і так внизу — скролимо
+    if (isScrolledToBottom() || messages.length <= 1) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  };
+
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'щойно';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} хв`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} год`;
+    return date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+  };
+
+  const getUserInitial = (message) => {
+    // Пріоритет: full_name з профілю → author_name → 'Гість'
+    const name = message.profiles?.full_name || message.author_name || 'Гість';
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getAuthorName = (message) => {
+    // Пріоритет: full_name з профілю → author_name → 'Гість'
+    return message.profiles?.full_name || message.author_name || 'Гість';
+  };
+
+  const getAuthorDistrict = (message) => {
+    // Повертає район якщо є в profiles
+    return message.profiles?.district || null;
+  };
+
+  const isMyMessage = (message) => {
+    return user && message.user_id === user.id;
+  };
+
+  const isAdmin = () => {
+    return profile?.is_admin || (user && ADMIN_EMAILS.includes(user.email));
+  };
+
+  const canDeleteMessage = (message) => {
+    return isMyMessage(message) || isAdmin();
+  };
+
+  const handleProfileClick = (userId) => {
+    if (!user) {
+      setShowGuestGuard(true);
+      return;
+    }
+    setSelectedUserId(userId);
+    setShowUserModal(true);
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col" style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white/80 backdrop-blur-lg border-b border-white/50 shadow-lg p-4 flex-shrink-0 z-10"
+      >
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-azure-blue to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <MessageSquare size={24} className="text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-gray-900">Чат спільноти</h1>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                  <Users size={14} />
+                  {onlineCount} онлайн
+                </p>
+                {onlineUsers.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    {onlineUsers.slice(0, 3).map((presence, idx) => (
+                      <div
+                        key={presence.user_id || idx}
+                        className="w-6 h-6 bg-gradient-to-br from-azure-blue to-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm"
+                        title={presence.full_name || 'Користувач'}
+                      >
+                        <span className="text-white text-xs font-bold">
+                          {(presence.full_name || '?').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    ))}
+                    {onlineUsers.length > 3 && (
+                      <span className="text-xs text-gray-500 ml-1">+{onlineUsers.length - 3}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          {profile && (
+            <button
+              onClick={() => handleProfileClick(user.id)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {profile.full_name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-gray-900 hidden md:block">
+                {profile.full_name || user.email?.split('@')[0] || 'Гість'}
+              </span>
+            </button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Messages - фіксована висота з прокруткою */}
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
+        <div className="max-w-[1200px] mx-auto space-y-3">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 size={48} className="text-azure-blue animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <MessageSquare size={64} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500 font-medium">Поки що нічого немає</p>
+                <p className="text-sm text-gray-400 mt-1">Напишіть перше повідомлення!</p>
+              </div>
+            </div>
+          ) : (
+            messages.map((message, index) => {
+              const isMine = isMyMessage(message);
+              const canDelete = canDeleteMessage(message);
+              
+              return (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  transition={{ 
+                    delay: Math.min(index * 0.01, 0.2),
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30
+                  }}
+                  className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`flex gap-3 max-w-[70%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Clickable Avatar */}
+                    <button
+                      onClick={() => handleProfileClick(message.user_id)}
+                      className="flex-shrink-0 hover:scale-110 transition-transform"
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+                        isMine
+                          ? 'bg-gradient-to-br from-vibrant-yellow to-orange-400'
+                          : 'bg-gradient-to-br from-azure-blue to-blue-600'
+                      }`}>
+                        <span className="text-white font-bold text-sm">
+                          {getUserInitial(message)}
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Message Bubble */}
+                    <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                      {/* Author Info */}
+                      <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <button
+                          onClick={() => handleProfileClick(message.user_id)}
+                          className="text-xs font-bold text-gray-700 hover:text-azure-blue transition-colors"
+                        >
+                          {getAuthorName(message)}
+                          {getAuthorDistrict(message) && (
+                            <span className="text-gray-500 font-normal"> | {getAuthorDistrict(message)}</span>
+                          )}
+                        </button>
+                        <span className="text-xs text-gray-400">
+                          {getTimeAgo(message.created_at)}
+                        </span>
+                      </div>
+                      
+                      {/* Message Content */}
+                      <div className="flex items-start gap-2">
+                        {isMine && canDelete && (
+                          <button
+                            onClick={() => handleDeleteMessage(message.id)}
+                            disabled={deletingMessageId === message.id}
+                            className="mt-1 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                            title="Видалити повідомлення"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                        
+                        <div className="flex flex-col gap-1 max-w-lg">
+                          <div className={`px-4 py-3 rounded-2xl ${
+                            isMine
+                              ? 'bg-gradient-to-br from-azure-blue via-blue-500 to-blue-600 text-white rounded-br-md shadow-lg shadow-blue-500/30'
+                              : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 rounded-bl-md border border-gray-200 shadow-lg'
+                          }`}>
+                            {/* Reply Quote */}
+                            {(message.reply_to || message.reply_to_id) && (
+                              <div className={`mb-2 pb-2 border-l-4 pl-3 ${
+                                isMine 
+                                  ? 'border-white/40 bg-white/10' 
+                                  : 'border-azure-blue/40 bg-azure-blue/5'
+                              } rounded`}>
+                                <p className={`text-xs font-semibold mb-1 ${isMine ? 'text-white/90' : 'text-azure-blue'}`}>
+                                  {message.reply_to?.author_name || 'Відповідь'}
+                                </p>
+                                <p className={`text-xs ${isMine ? 'text-white/70' : 'text-gray-600'} line-clamp-2`}>
+                                  {message.reply_to?.content || '...'}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Message Text */}
+                            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                              {message.content}
+                            </p>
+                          </div>
+                          
+                          {/* Reply Button */}
+                          <button
+                            onClick={() => handleReply(message)}
+                            className={`text-xs px-2 py-1 rounded-lg transition-all self-start ${
+                              isMine
+                                ? 'text-gray-600 hover:text-azure-blue hover:bg-azure-blue/10'
+                                : 'text-gray-600 hover:text-azure-blue hover:bg-azure-blue/10'
+                            }`}
+                            title="Відповісти"
+                          >
+                            💬 Відповісти
+                          </button>
+                        </div>
+                        
+                        {!isMine && canDelete && (
+                          <button
+                            onClick={() => handleDeleteMessage(message.id)}
+                            disabled={deletingMessageId === message.id}
+                            className="mt-1 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                            title="Видалити повідомлення (Адмін)"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Input - зафіксована панель внизу */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg p-4"
+        style={{ flexShrink: 0, position: 'sticky', bottom: 0, zIndex: 10 }}
+      >
+        <div className="max-w-[1200px] mx-auto">
+          {/* Reply Banner */}
+          {replyTo && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mb-3 p-3 bg-azure-blue/10 border-l-4 border-azure-blue rounded-lg flex items-start justify-between"
+            >
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-azure-blue mb-1">
+                  💬 Відповідь користувачу {replyTo.author}
+                </p>
+                <p className="text-sm text-gray-700 line-clamp-2">
+                  {replyTo.content}
+                </p>
+              </div>
+              <button
+                onClick={cancelReply}
+                className="ml-2 p-1 hover:bg-red-100 rounded-lg transition-colors"
+                title="Скасувати"
+              >
+                <span className="text-lg">✖️</span>
+              </button>
+            </motion.div>
+          )}
+
+
+          {/* Input Field */}
+          <div className="flex gap-3 items-center">
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Напишіть повідомлення..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                className="w-full pl-6 pr-14 py-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-transparent text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue focus:bg-white transition-all shadow-inner"
+                disabled={sending}
+              />
+              
+              {/* Emoji Button - ВСЕРЕДИНІ поля вводу (абсолютне позиціювання) */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <button
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="p-2 hover:bg-gray-200/50 rounded-full transition-all"
+                  title="Емодзі"
+                  type="button"
+                >
+                  <span className="text-xl leading-none">😀</span>
+                </button>
+              </div>
+
+              {/* Emoji Picker Popover - Відкривається ВГОРУ над полем */}
+              {showEmojiPicker && (
+                <motion.div
+                  ref={emojiPickerRef}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white rounded-2xl shadow-2xl border border-gray-200 p-3 grid grid-cols-6 gap-2 z-[100]"
+                  style={{ width: '320px' }}
+                >
+                  <div className="col-span-6 text-xs text-gray-500 font-medium mb-1 text-center">
+                    Виберіть емодзі:
+                  </div>
+                  {['😀', '😂', '🥰', '😍', '🤗', '🤔', '😎', '🥳', '😊', '😇', '🙂', '😉',
+                    '❤️', '💙', '💛', '💚', '🧡', '💜', '🖤', '🤍', '💕', '💖', '✨', '⭐',
+                    '👍', '👏', '🙏', '💪', '✌️', '🤝', '👋', '🙌', '🎉', '🎊', '🔥', '💯',
+                    '🇺🇦', '🌍', '🌈', '☀️', '🌙', '⚡', '💫', '🌟'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleEmojiClick(emoji)}
+                      className="text-2xl hover:bg-azure-blue/10 rounded-lg p-2 transition-all hover:scale-125 active:scale-95"
+                      type="button"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+            
+            <button
+              onClick={handleSendMessage}
+              disabled={sending || !messageText.trim()}
+              className="px-6 py-4 bg-gradient-to-r from-azure-blue via-blue-500 to-blue-600 text-white rounded-2xl font-bold hover:shadow-xl hover:shadow-blue-500/50 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
+            >
+              {sending ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  <span className="hidden md:inline">Надсилання...</span>
+                </>
+              ) : (
+                <>
+                  <Send size={20} />
+                  <span className="hidden md:inline">Надіслати</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* User Profile Modal */}
+      {showUserModal && selectedUserId && (
+        <UserProfileModal
+          userId={selectedUserId}
+          onClose={() => {
+            setShowUserModal(false);
+            setSelectedUserId(null);
+          }}
+        />
+      )}
+
+      {/* Guest Guard Modal - показується для неавторизованих користувачів */}
+      {showGuestGuard && (
+        <GuestGuard
+          onClose={() => setShowGuestGuard(false)}
+          onLogin={() => {
+            setShowGuestGuard(false);
+            setShowLoginModal(true);
+          }}
+          onRegister={() => {
+            setShowGuestGuard(false);
+            setShowRegisterModal(true);
+          }}
+        />
+      )}
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSwitchToRegister={() => {
+            setShowLoginModal(false);
+            setShowRegisterModal(true);
+          }}
+        />
+      )}
+
+      {/* Register Modal */}
+      {showRegisterModal && (
+        <RegisterModal
+          onClose={() => setShowRegisterModal(false)}
+          onSwitchToLogin={() => {
+            setShowRegisterModal(false);
+            setShowLoginModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+}
