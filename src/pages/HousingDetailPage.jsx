@@ -35,7 +35,7 @@ export default function HousingDetailPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase.from('profiles').select('is_admin').eq('id', session.user.id).single().then(({ data }) => setProfile(data));
+        supabase.from('profiles').select('is_admin').eq('id', session.user.id).maybeSingle().then(({ data }) => setProfile(data));
       }
     });
     return () => subscription?.unsubscribe();
@@ -51,7 +51,7 @@ export default function HousingDetailPage() {
           .from('profiles')
           .select('is_admin')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
         setProfile(data);
       }
     } catch (e) {

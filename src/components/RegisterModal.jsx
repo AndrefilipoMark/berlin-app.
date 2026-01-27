@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, UserPlus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, ensureProfile } from '../lib/supabase';
 
 export default function RegisterModal({ onClose, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -60,13 +60,22 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
       if (error) throw error;
 
       console.log('Registration successful:', data);
-      
-      // Якщо реєстрація успішна, автоматично логінимося
+
       if (data.user) {
-        // Supabase автоматично логінить після signUp, просто показуємо success
+        // Створюємо профіль одразу після реєстрації, навіть якщо сесії ще немає
+        const { ok, error: profileErr } = await ensureProfile({
+          id: data.user.id,
+          email: data.user.email ?? formData.email,
+          full_name: formData.fullName || data.user.user_metadata?.full_name || 'Користувач',
+          gender: formData.gender || data.user.user_metadata?.gender || null,
+        });
+        if (!ok && profileErr) {
+          console.warn('Profile ensure failed:', profileErr);
+          // Не блокуємо реєстрацію, але попереджаємо користувача
+          console.warn('Profile will be created on next login');
+        }
+
         setSuccess(true);
-        
-        // Закриваємо модалку та оновлюємо сторінку через 1.5 секунди
         setTimeout(() => {
           onClose();
           window.location.reload();

@@ -191,13 +191,13 @@ export default function ChatPage() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-      
+        .maybeSingle();
+
       if (error) {
         console.error('❌ Error loading profile:', error);
         return;
       }
-      
+
       if (data) {
         console.log('✅ Profile loaded:', {
           full_name: data.full_name || '(not set)',
@@ -317,7 +317,7 @@ export default function ChatPage() {
               .from('profiles')
               .select('full_name, avatar_url, district, is_admin')
               .eq('id', payload.new.user_id)
-              .single();
+              .maybeSingle();
             
             if (pError) console.error('❌ Помилка завантаження профілю автора:', pError);
 

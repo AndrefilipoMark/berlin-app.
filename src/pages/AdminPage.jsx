@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [items, setItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
 
@@ -64,7 +65,7 @@ export default function AdminPage() {
         .from('profiles')
         .select('is_admin')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
       
       const userIsAdmin = profileData?.is_admin || ADMIN_EMAILS.includes(session.user.email);
       setIsAdmin(userIsAdmin);
@@ -157,6 +158,7 @@ export default function AdminPage() {
   const handleDelete = async (type, id) => {
     if (!confirm('Ви впевнені, що хочете видалити цей запис?')) return;
 
+    setDeletingId(id);
     try {
       const tableMap = {
         users: 'profiles',
@@ -174,13 +176,15 @@ export default function AdminPage() {
         .eq('id', id);
 
       if (error) throw error;
-      
-      alert('Успішно видалено!');
-      loadItems(type);
+
+      setItems((prev) => prev.filter((x) => x.id !== id));
       loadStats();
+      alert('Успішно видалено!');
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert('Помилка при видаленні: ' + error.message);
+      alert('Помилка при видаленні: ' + (error?.message ?? String(error)));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -524,10 +528,15 @@ export default function AdminPage() {
                                 e.stopPropagation();
                                 handleDelete(activeTab, item.id);
                               }}
-                              className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors"
+                              disabled={deletingId === item.id}
+                              className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Видалити"
                             >
-                              <Trash2 size={16} />
+                              {deletingId === item.id ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
                             </button>
                           </div>
                         </td>

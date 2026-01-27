@@ -203,6 +203,41 @@ export const getDistrictsStats = async () => {
   }
 };
 
+const ensureProfileLocks = new Set();
+
+/** Створити або оновити профіль (insert, при дублікаті — update). Уникає 400 при upsert. */
+export const ensureProfile = async (payload) => {
+  const { id, email, full_name, gender } = payload;
+  if (!id) return { ok: false, error: new Error('ensureProfile: id required') };
+  while (ensureProfileLocks.has(id)) {
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  ensureProfileLocks.add(id);
+  try {
+    const row = {
+      id,
+      email: email ?? null,
+      full_name: (full_name && String(full_name).trim()) ? String(full_name).trim() : 'Користувач',
+      gender: gender != null && String(gender).trim() !== '' ? String(gender).trim() : null,
+    };
+    const { error: insertErr } = await supabase.from('profiles').insert([row]);
+    if (!insertErr) return { ok: true };
+    if (insertErr?.code === '23505' || /unique|duplicate|conflict|23505/i.test(String(insertErr?.message || ''))) {
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({ email: row.email, full_name: row.full_name, gender: row.gender })
+        .eq('id', id);
+      if (!updateErr) return { ok: true };
+      console.warn('ensureProfile update failed:', updateErr?.message || updateErr);
+      return { ok: false, error: updateErr };
+    }
+    console.warn('ensureProfile insert failed:', insertErr?.message, insertErr?.code, insertErr?.details);
+    return { ok: false, error: insertErr };
+  } finally {
+    ensureProfileLocks.delete(id);
+  }
+};
+
 /** Повертає Map<userId, { full_name, avatar_url }> для масиву user_id. Використовувати для відображення імен та аватарів авторов. */
 export const getProfilesByIds = async (userIds) => {
   const ids = [...new Set((userIds || []).filter(Boolean))];

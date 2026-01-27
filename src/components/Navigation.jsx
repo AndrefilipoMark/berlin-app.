@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Briefcase, Building2, MessageCircle, MessageSquare, Sparkles, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { supabase, updateLastSeen, getFriendRequests, getUnreadMessagesCount } from '../lib/supabase';
+import { supabase, updateLastSeen, getFriendRequests, getUnreadMessagesCount, ensureProfile } from '../lib/supabase';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
 
@@ -166,81 +166,86 @@ export default function Navigation() {
     }
   };
 
-  const loadProfile = async (userId) => {
+  const loadProfile = async (userId, retryCount = 0) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-      
+        .maybeSingle();
+
       if (!error && data) {
         setProfile(data);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
+      
+      // Якщо профілю немає, намагаємося створити його
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== userId) return;
+      
+      const { ok } = await ensureProfile({
+        id: user.id,
+        email: user.email ?? null,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Користувач',
+        gender: user.user_metadata?.gender || null,
+      });
+      
+      if (ok) {
+        // Невелика затримка для синхронізації бази даних
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const { data: next } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        if (next) {
+          setProfile(next);
+        } else if (retryCount < 2) {
+          // Retry ще раз, якщо профіль ще не з'явився
+          setTimeout(() => loadProfile(userId, retryCount + 1), 500);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading profile:', e);
+      // Retry при помилці, якщо ще не перевищено ліміт
+      if (retryCount < 2) {
+        setTimeout(() => loadProfile(userId, retryCount + 1), 500);
+      }
     }
   };
 
   const handleLogout = async () => {
     console.log('🚪 Logout initiated...');
+    setShowUserMenu(false);
     
     try {
-      // Крок 1: Закриваємо меню
-      console.log('1️⃣ Closing menu...');
-      setShowUserMenu(false);
-      
-      // Крок 2: Виходимо з системи через Supabase
-      console.log('2️⃣ Signing out from Supabase...');
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('❌ Supabase signOut error:', error);
-        throw error;
+      // Перевіряємо чи є сесія перед signOut
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('2️⃣ Signing out from Supabase...');
+        const { error } = await supabase.auth.signOut();
+        if (error && !error.message?.includes('session missing')) {
+          console.warn('⚠️ SignOut error (non-critical):', error);
+        } else {
+          console.log('✅ Supabase signOut successful');
+        }
+      } else {
+        console.log('ℹ️ No active session, skipping signOut');
       }
-      console.log('✅ Supabase signOut successful');
-      
-      // Крок 3: Очищаємо стан React
-      console.log('3️⃣ Clearing React state...');
+    } catch (signOutError) {
+      // Ігноруємо помилки signOut (сесія могла вже закінчитись)
+      console.warn('⚠️ SignOut attempt failed (continuing anyway):', signOutError?.message);
+    }
+    
+    // Завжди очищаємо стан та сховище
+    try {
       setUser(null);
       setProfile(null);
-      
-      // Крок 4: Примусово очищаємо локальне сховище
-      console.log('4️⃣ Clearing localStorage and sessionStorage...');
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-        console.log('✅ Storage cleared successfully');
-      } catch (storageError) {
-        console.warn('⚠️ Could not clear storage:', storageError);
-        // Продовжуємо навіть якщо очищення не вдалось
-      }
-      
-      // Крок 5: Перенаправляємо на головну сторінку
-      console.log('5️⃣ Redirecting to home page...');
-      window.location.replace('/');
-      
-    } catch (error) {
-      console.error('❌ LOGOUT ERROR:', error);
-      console.error('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      });
-      
-      // Якщо помилка - все одно пробуємо очистити та перенаправити
-      console.log('⚠️ Attempting force logout...');
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-        setUser(null);
-        setProfile(null);
-      } catch (cleanupError) {
-        console.error('❌ Cleanup error:', cleanupError);
-      }
-      
-      alert('Помилка при виході з системи. Будь ласка, перегляньте Console (F12) для деталей.');
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log('✅ State and storage cleared');
+    } catch (cleanupError) {
+      console.warn('⚠️ Cleanup warning:', cleanupError);
     }
+    
+    // Перенаправляємо на головну
+    window.location.replace('/');
   };
 
   const getUserInitial = () => {

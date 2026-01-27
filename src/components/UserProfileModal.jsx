@@ -40,10 +40,9 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setProfile(data);
+      if (!error) setProfile(data ?? null);
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {

@@ -115,7 +115,7 @@ export default function ForumPage() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       if (data) setProfile(data);
     } catch (e) {
       console.error('Error loading profile:', e);

@@ -37,7 +37,7 @@ export function JobFormModal({ onClose }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase.from('profiles').select('full_name').eq('id', session.user.id).single()
+        supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
           .then(({ data }) => setProfile(data));
       }
     });
@@ -247,7 +247,7 @@ export function HousingFormModal({ onClose }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase.from('profiles').select('full_name').eq('id', session.user.id).single()
+        supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
           .then(({ data }) => setProfile(data));
       }
     });
@@ -426,7 +426,7 @@ export function ServiceFormModal({ onClose }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase.from('profiles').select('full_name').eq('id', session.user.id).single()
+        supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle()
           .then(({ data }) => setProfile(data));
       }
     });
@@ -585,8 +585,8 @@ export function ForumPostFormModal({ onClose }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-      
+        .maybeSingle();
+
       if (data) {
         setProfile(data);
         setFormData(prev => ({

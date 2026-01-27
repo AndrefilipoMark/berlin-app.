@@ -35,8 +35,10 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
       console.error('Login error:', error);
       if (error.message.includes('Invalid login credentials')) {
         setError('Невірний email або пароль');
-      } else if (error.message.includes('Email not confirmed')) {
-        setError('Будь ласка, підтвердіть email');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setError(
+          'Увімкнено підтвердження email. Вимкніть у Supabase: Authentication → Providers → Email → «Confirm email» (off) і збережіть. Або перевірте пошту та натисніть посилання з листа.'
+        );
       } else {
         setError(error.message);
       }

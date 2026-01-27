@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase, getActivityByUser, getFriends, getFriendRequests, acceptFriendRequest, rejectFriendRequest, removeFriend, blockUser, unblockUser, getBlockedUsers, isUserBlocked } from '../lib/supabase';
+import { supabase, ensureProfile, getActivityByUser, getFriends, getFriendRequests, acceptFriendRequest, rejectFriendRequest, removeFriend, blockUser, unblockUser, getBlockedUsers, isUserBlocked } from '../lib/supabase';
 import { onEvent, Events } from '../lib/events';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -140,17 +140,44 @@ export default function PublicProfile() {
       setLoading(true);
       setError('');
 
-      const { data, error: profileError } = await supabase
+      let { data, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
       if (!data) {
-        setError('Профіль не знайдено');
-        return;
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        if (user && user.id === id) {
+          const { ok } = await ensureProfile({
+            id: user.id,
+            email: user.email ?? null,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Користувач',
+            gender: user.user_metadata?.gender ?? null,
+          });
+          if (ok) {
+            // Невелика затримка для синхронізації бази даних
+            await new Promise(resolve => setTimeout(resolve, 300));
+            // Retry до 3 разів
+            for (let attempt = 0; attempt < 3; attempt++) {
+              const res = await supabase.from('profiles').select('*').eq('id', id).maybeSingle();
+              if (!res.error && res.data) {
+                data = res.data;
+                break;
+              }
+              if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            }
+          }
+        }
+        if (!data) {
+          setError('Профіль не знайдено');
+          return;
+        }
       }
 
       console.log('✅ Profile loaded:', {

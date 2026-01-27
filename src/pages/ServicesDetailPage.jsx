@@ -40,7 +40,7 @@ export default function ServicesDetailPage() {
           .from('profiles')
           .select('is_admin')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
         setProfile(data);
       }
     } catch (e) {
