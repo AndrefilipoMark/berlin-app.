@@ -53,6 +53,10 @@ export default function MessagesPage() {
       if (userId) {
         setSelectedConversation({ user_id: userId });
         loadMessages(userId);
+      } else {
+        // Якщо userId немає, очищаємо вибрану розмову
+        setSelectedConversation(null);
+        setMessages([]);
       }
     }
   }, [currentUser?.id, userId]);
@@ -926,68 +930,97 @@ export default function MessagesPage() {
     );
   }
 
+  const isChatView = !!userId;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-4 font-semibold transition-colors"
-          >
-            <ArrowLeft size={20} strokeWidth={2} />
-            <span>Назад</span>
-          </button>
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-              <MessageSquare size={32} className="text-blue-600" strokeWidth={2} />
-              Приватні повідомлення
-            </h1>
-            {/* Перемикач звуку */}
+    <div
+      className={
+        isChatView
+          ? 'h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-gray-50'
+          : 'min-h-screen bg-gray-50'
+      }
+    >
+      <div
+        className={
+          isChatView
+            ? 'flex-1 min-h-0 flex flex-col overflow-hidden p-0 max-w-7xl mx-auto w-full'
+            : 'max-w-7xl mx-auto p-2 md:p-4 lg:p-8 pb-0'
+        }
+      >
+        {/* Header - прихований на мобільному, коли обрана розмова */}
+        <div className={`flex-shrink-0 ${userId ? 'hidden md:block' : ''}`}>
+          <div className="mb-4 md:mb-6">
             <button
-              onClick={toggleSound}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all"
-              title={soundEnabled ? 'Вимкнути звукові сповіщення' : 'Увімкнути звукові сповіщення'}
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-3 md:mb-4 font-semibold transition-colors"
             >
-              {soundEnabled ? (
-                <>
-                  <Volume2 size={20} className="text-blue-600" strokeWidth={2} />
-                  <span className="text-sm font-semibold text-gray-700 hidden md:inline">Звук увімкнено</span>
-                </>
-              ) : (
-                <>
-                  <VolumeX size={20} className="text-gray-400" strokeWidth={2} />
-                  <span className="text-sm font-semibold text-gray-500 hidden md:inline">Звук вимкнено</span>
-                </>
-              )}
+              <ArrowLeft size={20} strokeWidth={2} />
+              <span>Назад</span>
             </button>
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-gray-900 flex items-center gap-2 md:gap-3">
+                <MessageSquare size={24} className="md:w-8 md:h-8 text-blue-600" strokeWidth={2} />
+                <span className="hidden sm:inline">Приватні повідомлення</span>
+                <span className="sm:hidden">Повідомлення</span>
+              </h1>
+              {/* Перемикач звуку */}
+              <button
+                onClick={toggleSound}
+                className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 shadow-sm transition-all"
+                title={soundEnabled ? 'Вимкнути звукові сповіщення' : 'Увімкнути звукові сповіщення'}
+              >
+                {soundEnabled ? (
+                  <>
+                    <Volume2 size={18} className="md:w-5 md:h-5 text-blue-600" strokeWidth={2} />
+                    <span className="text-xs md:text-sm font-semibold text-gray-700 hidden md:inline">Звук увімкнено</span>
+                  </>
+                ) : (
+                  <>
+                    <VolumeX size={18} className="md:w-5 md:h-5 text-gray-400" strokeWidth={2} />
+                    <span className="text-xs md:text-sm font-semibold text-gray-500 hidden md:inline">Звук вимкнено</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 h-[calc(100vh-200px)]">
-            {/* Conversations List */}
-            <div className="lg:col-span-1 border-r border-gray-200 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Users size={20} className="text-blue-600" strokeWidth={2} />
+        <div
+          className={
+            isChatView
+              ? 'flex-1 min-h-0 flex flex-col overflow-hidden bg-white rounded-none md:rounded-3xl md:shadow-sm md:border md:border-gray-200'
+              : 'bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-200 overflow-hidden flex flex-col'
+          }
+        >
+          <div
+            className={
+              isChatView
+                ? 'grid grid-cols-1 lg:grid-cols-3 flex-1 min-h-0 overflow-hidden'
+                : 'grid grid-cols-1 lg:grid-cols-3 h-[calc(100vh-180px)] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-220px)]'
+            }
+          >
+            {/* Conversations List - прихований на мобільному, коли обрана розмова */}
+            <div className={`lg:col-span-1 border-r border-gray-200 overflow-hidden flex flex-col ${userId ? 'hidden md:flex' : ''}`}>
+            <div className="p-2 md:p-4 border-b border-gray-200 bg-white">
+              <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Users size={18} className="md:w-5 md:h-5 text-blue-600" strokeWidth={2} />
                 Розмови
               </h2>
             </div>
             <div className="flex-1 overflow-y-auto bg-white">
               {conversations.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <Users size={48} className="text-gray-300 mx-auto mb-4" strokeWidth={1.5} />
-                  <p>У вас немає розмов</p>
-                  <p className="text-sm mt-2">Почніть спілкування з іншими користувачами</p>
+                <div className="p-6 md:p-8 text-center text-gray-500">
+                  <Users size={40} className="md:w-12 md:h-12 text-gray-300 mx-auto mb-3 md:mb-4" strokeWidth={1.5} />
+                  <p className="text-sm md:text-base">У вас немає розмов</p>
+                  <p className="text-xs md:text-sm mt-2">Почніть спілкування з іншими користувачами</p>
                 </div>
               ) : (
                 <div>
                   {/* Друзі */}
                   {friendsConversations.length > 0 && (
-                    <div className="p-3 border-b border-gray-200 bg-blue-50">
-                      <div className="flex items-center gap-2 text-sm font-bold text-blue-700">
-                        <UserCheck size={16} className="text-blue-600" strokeWidth={2} />
+                    <div className="p-2 md:p-3 border-b border-gray-200 bg-blue-50">
+                      <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-blue-700">
+                        <UserCheck size={14} className="md:w-4 md:h-4 text-blue-600" strokeWidth={2} />
                         <span>Друзі ({friendsConversations.length})</span>
                       </div>
                     </div>
@@ -1002,30 +1035,30 @@ export default function MessagesPage() {
                           setSelectedConversation(conv);
                           navigate(`/messages/${conv.user_id}`);
                         }}
-                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                        className={`w-full p-2.5 md:p-4 text-left hover:bg-gray-50 transition-colors ${
                           isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 md:gap-3">
                           <div className="relative flex-shrink-0">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold text-base">
+                            <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold text-xs md:text-base">
                                 {(conv.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             {/* Зелений індикатор онлайн */}
                             {isOnline && (
-                              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-bold text-gray-900 truncate text-sm">
+                            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
+                              <p className="font-bold text-gray-900 truncate text-xs md:text-sm">
                                 {conv.friend_profile?.full_name || 'Користувач'}
                               </p>
                             </div>
                             {conv.last_message && (
-                              <p className="text-xs text-gray-500 truncate">
+                              <p className="text-[10px] md:text-xs text-gray-500 truncate">
                                 {conv.last_message.message_type === 'friend_request' && conv.last_message.receiver_id === currentUser.id
                                   ? '🔔 Запит на дружбу'
                                   : conv.last_message.message}
@@ -1034,7 +1067,7 @@ export default function MessagesPage() {
                           </div>
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             {conv.last_message && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-[10px] md:text-xs text-gray-400">
                                 {new Date(conv.last_message.created_at).toLocaleTimeString('uk-UA', {
                                   hour: '2-digit',
                                   minute: '2-digit'
@@ -1042,14 +1075,14 @@ export default function MessagesPage() {
                               </span>
                             )}
                             {conv.unread_count > 0 && (
-                              <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                              <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-600 text-white text-[10px] md:text-xs font-bold rounded-full">
                                 {conv.unread_count}
                               </span>
                             )}
                             {conv.last_message?.message_type === 'friend_request' && 
                              conv.last_message.receiver_id === currentUser.id && 
                              !conv.last_message.read && (
-                              <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full animate-pulse">
+                              <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-yellow-500 text-white text-[10px] md:text-xs font-bold rounded-full animate-pulse">
                                 !
                               </span>
                             )}
@@ -1061,9 +1094,9 @@ export default function MessagesPage() {
 
                   {/* Інші користувачі */}
                   {othersConversations.length > 0 && (
-                    <div className="p-3 border-b border-gray-200 bg-gray-50 mt-2">
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                        <UserX size={16} className="text-blue-600" strokeWidth={2} />
+                    <div className="p-2 md:p-3 border-b border-gray-200 bg-gray-50 mt-1 md:mt-2">
+                      <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-700">
+                        <UserX size={14} className="md:w-4 md:h-4 text-blue-600" strokeWidth={2} />
                         <span>Інші користувачі ({othersConversations.length})</span>
                       </div>
                     </div>
@@ -1078,30 +1111,30 @@ export default function MessagesPage() {
                           setSelectedConversation(conv);
                           navigate(`/messages/${conv.user_id}`);
                         }}
-                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                        className={`w-full p-2.5 md:p-4 text-left hover:bg-gray-50 transition-colors ${
                           isSelected ? 'bg-blue-50 border-l-4 border-blue-600' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 md:gap-3">
                           <div className="relative flex-shrink-0">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold text-base">
+                            <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold text-xs md:text-base">
                                 {(conv.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             {/* Зелений індикатор онлайн */}
                             {isOnline && (
-                              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-bold text-gray-900 truncate text-sm">
+                            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
+                              <p className="font-bold text-gray-900 truncate text-xs md:text-sm">
                                 {conv.friend_profile?.full_name || 'Користувач'}
                               </p>
                             </div>
                             {conv.last_message && (
-                              <p className="text-xs text-gray-500 truncate">
+                              <p className="text-[10px] md:text-xs text-gray-500 truncate">
                                 {conv.last_message.message_type === 'friend_request' && conv.last_message.receiver_id === currentUser.id
                                   ? '🔔 Запит на дружбу'
                                   : conv.last_message.message}
@@ -1110,7 +1143,7 @@ export default function MessagesPage() {
                           </div>
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             {conv.last_message && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-[10px] md:text-xs text-gray-400">
                                 {new Date(conv.last_message.created_at).toLocaleTimeString('uk-UA', {
                                   hour: '2-digit',
                                   minute: '2-digit'
@@ -1118,14 +1151,14 @@ export default function MessagesPage() {
                               </span>
                             )}
                             {conv.unread_count > 0 && (
-                              <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                              <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-600 text-white text-[10px] md:text-xs font-bold rounded-full">
                                 {conv.unread_count}
                               </span>
                             )}
                             {conv.last_message?.message_type === 'friend_request' && 
                              conv.last_message.receiver_id === currentUser.id && 
                              !conv.last_message.read && (
-                              <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full animate-pulse">
+                              <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-yellow-500 text-white text-[10px] md:text-xs font-bold rounded-full animate-pulse">
                                 !
                               </span>
                             )}
@@ -1140,34 +1173,43 @@ export default function MessagesPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="lg:col-span-2 bg-white overflow-hidden flex flex-col">
+            <div className="lg:col-span-2 bg-white overflow-hidden flex flex-col min-h-0">
             {selectedConversation ? (
               <>
-                {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200 bg-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
+                {/* Chat Header - Sticky зверху */}
+                <div className="sticky top-0 z-20 px-2 py-1.5 md:p-4 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
+                      {/* Кнопка "Назад" на мобільному */}
+                      {userId && (
+                        <button
+                          onClick={() => navigate('/messages')}
+                          className="md:hidden flex-shrink-0 p-1 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <ArrowLeft size={18} strokeWidth={2} />
+                        </button>
+                      )}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-8 h-8 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-xs md:text-lg">
                             {(getOtherUserProfile()?.full_name || '?').charAt(0).toUpperCase()}
                           </span>
                         </div>
                         {/* Зелений індикатор онлайн */}
                         {selectedConversation?.user_id && isUserOnline(selectedConversation.user_id) && (
-                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
+                          <div className="absolute bottom-0 right-0 w-2 h-2 md:w-3.5 md:h-3.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
                         )}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-base">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-xs md:text-base truncate leading-tight">
                           {getOtherUserProfile()?.full_name || 'Користувач'}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0">
+                        <div className="flex flex-wrap items-center gap-x-1 md:gap-x-2 gap-y-0">
                           {getOtherUserProfile()?.district && (
-                            <p className="text-xs text-gray-500">{getOtherUserProfile().district}</p>
+                            <p className="text-[9px] md:text-xs text-gray-500 truncate">{getOtherUserProfile().district}</p>
                           )}
                           {(getOtherUserProfile()?.gender === 'male' || getOtherUserProfile()?.gender === 'female') && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-[9px] md:text-xs text-gray-500">
                               {getOtherUserProfile().gender === 'male' ? 'Чоловік' : 'Жінка'}
                             </span>
                           )}
@@ -1184,7 +1226,7 @@ export default function MessagesPage() {
                       <button
                         onClick={handleSendFriendRequest}
                         disabled={sendingFriendRequest}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                       >
                         {sendingFriendRequest ? (
                           <>
@@ -1208,7 +1250,7 @@ export default function MessagesPage() {
                     {selectedConversation && 
                      friendshipStatus && 
                      friendshipStatus.status === 'pending_sent' && (
-                      <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-xl font-semibold">
+                      <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-xl text-sm font-semibold flex-shrink-0">
                         <UserCheck size={18} strokeWidth={2} />
                         <span>Запит на дружбу відправлено</span>
                       </div>
@@ -1216,16 +1258,16 @@ export default function MessagesPage() {
                   </div>
                 </div>
 
-                {/* Messages */}
+                {/* Messages - скролиться тільки ця область */}
                 <div
                   ref={messagesContainerRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-4"
+                  className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 min-h-0 bg-white"
                 >
                   {messages.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <MessageSquare size={48} className="text-gray-300 mx-auto mb-4" />
-                      <p>Повідомлень поки немає</p>
-                      <p className="text-sm mt-2">Почніть розмову!</p>
+                    <div className="text-center py-8 md:py-12 text-gray-500">
+                      <MessageSquare size={40} className="md:w-12 md:h-12 text-gray-300 mx-auto mb-3 md:mb-4" />
+                      <p className="text-sm md:text-base">Повідомлень поки немає</p>
+                      <p className="text-xs md:text-sm mt-1.5 md:mt-2">Почніть розмову!</p>
                     </div>
                   ) : (
                     messages.map((message) => {
@@ -1242,15 +1284,15 @@ export default function MessagesPage() {
                       // Системне повідомлення про запит на дружбу — завжди показуємо отримані запити; кнопки тільки якщо запит ще очікує
                       if (isFriendRequest && !isOwn) {
                         return (
-                          <div key={message.id} className="flex justify-center w-full my-2">
-                            <div className="max-w-[80%] w-fit rounded-2xl px-4 py-2 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200">
-                              <div className="flex items-center gap-2 mb-3">
-                                <UserCheck size={20} className="text-yellow-600" />
-                                <p className="font-bold text-gray-900">Системне повідомлення</p>
+                          <div key={message.id} className="flex justify-center w-full my-1 md:my-2">
+                            <div className="max-w-[90%] md:max-w-[80%] w-fit rounded-xl md:rounded-2xl px-3 md:px-4 py-2 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200">
+                              <div className="flex items-center gap-1.5 md:gap-2 mb-2 md:mb-3">
+                                <UserCheck size={16} className="md:w-5 md:h-5 text-yellow-600" />
+                                <p className="font-bold text-gray-900 text-xs md:text-sm">Системне повідомлення</p>
                               </div>
-                              <p className="text-sm text-gray-700 mb-4">{message.message}</p>
+                              <p className="text-xs md:text-sm text-gray-700 mb-3 md:mb-4">{message.message}</p>
                               {canAcceptOrReject ? (
-                                <div className="flex gap-2">
+                                <div className="flex gap-1.5 md:gap-2">
                                   <button
                                     onClick={async () => {
                                       setProcessingRequest(message.id);
@@ -1273,13 +1315,13 @@ export default function MessagesPage() {
                                       }
                                     }}
                                     disabled={isProcessing}
-                                    className="flex-1 px-4 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1 px-3 md:px-4 py-1.5 md:py-2 bg-green-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-semibold hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 md:gap-2"
                                   >
                                     {isProcessing ? (
-                                      <Loader2 size={18} className="animate-spin" />
+                                      <Loader2 size={14} className="md:w-[18px] md:h-[18px] animate-spin" />
                                     ) : (
                                       <>
-                                        <Check size={18} />
+                                        <Check size={14} className="md:w-[18px] md:h-[18px]" />
                                         <span>Прийняти</span>
                                       </>
                                     )}
@@ -1302,25 +1344,25 @@ export default function MessagesPage() {
                                       }
                                     }}
                                     disabled={isProcessing}
-                                    className="flex-1 px-4 py-2 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="flex-1 px-3 md:px-4 py-1.5 md:py-2 bg-red-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-semibold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 md:gap-2"
                                   >
                                     {isProcessing ? (
-                                      <Loader2 size={18} className="animate-spin" />
+                                      <Loader2 size={14} className="md:w-[18px] md:h-[18px] animate-spin" />
                                     ) : (
                                       <>
-                                        <X size={18} />
+                                        <X size={14} className="md:w-[18px] md:h-[18px]" />
                                         <span>Відхилити</span>
                                       </>
                                     )}
                                   </button>
                                 </div>
                               ) : showAcceptedLabel ? (
-                                <p className="text-sm text-green-600 font-medium flex items-center gap-1.5">
-                                  <Check size={16} />
+                                <p className="text-xs md:text-sm text-green-600 font-medium flex items-center gap-1 md:gap-1.5">
+                                  <Check size={14} className="md:w-4 md:h-4" />
                                   Ви прийняли цей запит
                                 </p>
                               ) : null}
-                              <p className="text-xs text-gray-500 mt-2">
+                              <p className="text-[10px] md:text-xs text-gray-500 mt-1.5 md:mt-2">
                                 {new Date(message.created_at).toLocaleTimeString('uk-UA', {
                                   hour: '2-digit',
                                   minute: '2-digit'
@@ -1334,14 +1376,14 @@ export default function MessagesPage() {
                       // Системне повідомлення про прийняття запиту
                       if (isFriendRequestAccepted) {
                         return (
-                          <div key={message.id} className="flex justify-center w-full my-2">
-                            <div className="max-w-[80%] w-fit rounded-2xl px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Check size={20} className="text-green-600" />
-                                <p className="font-bold text-gray-900">Системне повідомлення</p>
+                          <div key={message.id} className="flex justify-center w-full my-1 md:my-2">
+                            <div className="max-w-[90%] md:max-w-[80%] w-fit rounded-xl md:rounded-2xl px-3 md:px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200">
+                              <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
+                                <Check size={16} className="md:w-5 md:h-5 text-green-600" />
+                                <p className="font-bold text-gray-900 text-xs md:text-sm">Системне повідомлення</p>
                               </div>
-                              <p className="text-sm text-gray-700">{message.message}</p>
-                              <p className="text-xs text-gray-500 mt-2">
+                              <p className="text-xs md:text-sm text-gray-700">{message.message}</p>
+                              <p className="text-[10px] md:text-xs text-gray-500 mt-1.5 md:mt-2">
                                 {new Date(message.created_at).toLocaleTimeString('uk-UA', {
                                   hour: '2-digit',
                                   minute: '2-digit'
@@ -1356,21 +1398,21 @@ export default function MessagesPage() {
                       return (
                         <div
                           key={message.id}
-                          className={`group flex ${isOwn ? 'justify-end' : 'justify-start'} items-end gap-2`}
+                          className={`group flex ${isOwn ? 'justify-end' : 'justify-start'} items-end gap-1.5 md:gap-2`}
                         >
                           {isOwn && (
                             <button
                               onClick={() => handleDeleteMessage(message.id)}
                               disabled={deletingMessageId === message.id}
-                              className="mb-1 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                              className="mb-1 p-1 md:p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 opacity-0 group-hover:opacity-100"
                               title="Видалити повідомлення"
                             >
-                              <Trash2 size={14} strokeWidth={2} />
+                              <Trash2 size={12} className="md:w-[14px] md:h-[14px]" strokeWidth={2} />
                             </button>
                           )}
-                          <div className="flex flex-col items-end gap-1" style={{ maxWidth: '80%', width: 'fit-content' }}>
+                          <div className="flex flex-col items-end gap-0.5 md:gap-1" style={{ maxWidth: '85%', width: 'fit-content' }}>
                             <div
-                              className={`rounded-2xl px-4 py-2 ${
+                              className={`rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 ${
                                 isOwn
                                   ? 'bg-blue-600 text-white'
                                   : isSystemMessage
@@ -1379,15 +1421,15 @@ export default function MessagesPage() {
                               }`}
                             >
                               {isSystemMessage && (
-                                <div className="flex items-center gap-1 mb-1">
-                                  <MessageSquare size={12} className="text-purple-600" strokeWidth={2} />
-                                  <span className="text-xs font-semibold text-purple-700">Система</span>
+                                <div className="flex items-center gap-1 mb-0.5 md:mb-1">
+                                  <MessageSquare size={10} className="md:w-3 md:h-3 text-purple-600" strokeWidth={2} />
+                                  <span className="text-[10px] md:text-xs font-semibold text-purple-700">Система</span>
                                 </div>
                               )}
-                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message}</p>
+                              <p className="text-xs md:text-sm whitespace-pre-wrap leading-relaxed break-words">{message.message}</p>
                             </div>
-                            <div className={`flex items-center gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                              <span className={`text-xs ${isOwn ? 'text-gray-400' : 'text-gray-400'}`}>
+                            <div className={`flex items-center gap-1 md:gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                              <span className={`text-[10px] md:text-xs ${isOwn ? 'text-gray-400' : 'text-gray-400'}`}>
                                 {new Date(message.created_at).toLocaleTimeString('uk-UA', {
                                   hour: '2-digit',
                                   minute: '2-digit'
@@ -1395,11 +1437,11 @@ export default function MessagesPage() {
                               </span>
                               {/* Індикатор прочитання (тільки для своїх повідомлень) */}
                               {isOwn && (
-                                <span className="text-xs">
+                                <span className="text-[10px] md:text-xs">
                                   {message.read ? (
-                                    <CheckCheck size={14} className="text-blue-600" strokeWidth={2.5} />
+                                    <CheckCheck size={12} className="md:w-[14px] md:h-[14px] text-blue-600" strokeWidth={2.5} />
                                   ) : (
-                                    <Check size={14} className="text-gray-400" strokeWidth={2.5} />
+                                    <Check size={12} className="md:w-[14px] md:h-[14px] text-gray-400" strokeWidth={2.5} />
                                   )}
                                 </span>
                               )}
@@ -1411,25 +1453,25 @@ export default function MessagesPage() {
                   )}
                   {/* Typing Indicator */}
                   {isTyping && selectedConversation && (
-                    <div className="flex justify-start items-center gap-2 px-4 py-2">
-                      <div className="bg-gray-100 rounded-2xl px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">
+                    <div className="flex justify-start items-center gap-2 px-2 md:px-4 py-1.5 md:py-2">
+                      <div className="bg-gray-100 rounded-xl md:rounded-2xl px-3 md:px-4 py-1.5 md:py-2">
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          <span className="text-xs md:text-sm text-gray-600">
                             {getOtherUserProfile()?.full_name || 'Користувач'} друкує
                           </span>
-                          <div className="flex gap-1">
+                          <div className="flex gap-0.5 md:gap-1">
                             <motion.span
-                              className="w-2 h-2 bg-gray-400 rounded-full"
+                              className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full"
                               animate={{ opacity: [0.4, 1, 0.4] }}
                               transition={{ duration: 1.4, repeat: Infinity, delay: 0 }}
                             />
                             <motion.span
-                              className="w-2 h-2 bg-gray-400 rounded-full"
+                              className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full"
                               animate={{ opacity: [0.4, 1, 0.4] }}
                               transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }}
                             />
                             <motion.span
-                              className="w-2 h-2 bg-gray-400 rounded-full"
+                              className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full"
                               animate={{ opacity: [0.4, 1, 0.4] }}
                               transition={{ duration: 1.4, repeat: Infinity, delay: 0.4 }}
                             />
@@ -1441,10 +1483,10 @@ export default function MessagesPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input - приховуємо для системних повідомлень */}
+                {/* Message Input - Sticky знизу, safe-area для вирізів */}
                 {!messages.some(m => m.message_type === 'friend_request' && m.receiver_id === currentUser.id && !m.read) && (
-                  <div className="p-4 border-t border-gray-200 bg-white">
-                    <div className="flex gap-2">
+                  <div className="sticky bottom-0 z-20 px-2 py-2 md:p-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-4 border-t border-gray-200 bg-white shadow-sm flex-shrink-0">
+                    <div className="flex gap-1.5 md:gap-2">
                       <div className="flex-1 relative">
                         <input
                           ref={inputRef}
@@ -1461,22 +1503,29 @@ export default function MessagesPage() {
                               handleSendMessage();
                             }
                           }}
+                          onFocus={() => {
+                            if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+                              requestAnimationFrame(() => {
+                                inputRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                              });
+                            }
+                          }}
                           onBlur={() => {
                             handleStopTyping();
                           }}
                           placeholder="Написати повідомлення..."
-                          className="w-full pl-5 pr-14 py-3.5 rounded-full border-2 border-gray-200 bg-gray-50 focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
+                          className="w-full pl-4 md:pl-5 pr-12 md:pr-14 py-2.5 md:py-3.5 rounded-full border-2 border-gray-200 bg-gray-50 focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-600/20 outline-none transition-all text-sm md:text-base"
                         />
                         
                         {/* Emoji Button - ВСЕРЕДИНІ поля вводу */}
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2">
                           <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            className="p-2 hover:bg-gray-200/50 rounded-full transition-all"
+                            className="p-1.5 md:p-2 hover:bg-gray-200/50 rounded-full transition-all"
                             title="Емодзі"
                             type="button"
                           >
-                            <span className="text-xl leading-none">😀</span>
+                            <span className="text-lg md:text-xl leading-none">😀</span>
                           </button>
                         </div>
 
@@ -1487,10 +1536,10 @@ export default function MessagesPage() {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white rounded-2xl shadow-2xl border border-gray-200 p-3 grid grid-cols-6 gap-2 z-[100]"
-                            style={{ width: '320px' }}
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white rounded-xl md:rounded-2xl shadow-2xl border border-gray-200 p-2 md:p-3 grid grid-cols-6 gap-1.5 md:gap-2 z-[100]"
+                            style={{ width: '280px', maxWidth: '90vw' }}
                           >
-                            <div className="col-span-6 text-xs text-gray-500 font-medium mb-1 text-center">
+                            <div className="col-span-6 text-[10px] md:text-xs text-gray-500 font-medium mb-1 text-center">
                               Виберіть емодзі:
                             </div>
                             {['😀', '😂', '🥰', '😍', '🤗', '🤔', '😎', '🥳', '😊', '😇', '🙂', '😉',
@@ -1500,7 +1549,7 @@ export default function MessagesPage() {
                               <button
                                 key={emoji}
                                 onClick={() => handleEmojiClick(emoji)}
-                                className="text-2xl hover:bg-blue-50 rounded-lg p-2 transition-all hover:scale-125 active:scale-95"
+                                className="text-lg md:text-2xl hover:bg-blue-50 rounded-lg p-1.5 md:p-2 transition-all hover:scale-125 active:scale-95"
                                 type="button"
                               >
                                 {emoji}
@@ -1512,12 +1561,12 @@ export default function MessagesPage() {
                       <button
                         onClick={handleSendMessage}
                         disabled={!messageText.trim() || sending}
-                        className="w-12 h-12 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                        className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
                       >
                         {sending ? (
-                          <Loader2 size={20} className="animate-spin" />
+                          <Loader2 size={18} className="md:w-5 md:h-5 animate-spin" />
                         ) : (
-                          <Send size={20} strokeWidth={2} />
+                          <Send size={18} className="md:w-5 md:h-5" strokeWidth={2} />
                         )}
                       </button>
                     </div>
@@ -1525,13 +1574,13 @@ export default function MessagesPage() {
                 )}
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-center p-8 bg-white">
+              <div className="flex-1 flex items-center justify-center text-center p-4 md:p-8 bg-white">
                 <div>
-                  <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-200">
-                    <MessageCircle size={40} className="text-blue-600" strokeWidth={2} />
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 border border-gray-200">
+                    <MessageCircle size={32} className="md:w-10 md:h-10 text-blue-600" strokeWidth={2} />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Виберіть розмову</h3>
-                  <p className="text-gray-500 text-sm">Оберіть друга зі списку, щоб почати спілкування</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-1.5 md:mb-2">Виберіть розмову</h3>
+                  <p className="text-gray-500 text-xs md:text-sm">Оберіть друга зі списку, щоб почати спілкування</p>
                 </div>
               </div>
             )}
