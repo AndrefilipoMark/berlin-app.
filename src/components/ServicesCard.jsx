@@ -66,8 +66,8 @@ export default function ServicesCard() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Sparkles size={22} className="text-white" />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-teal-500/10 text-teal-600 border border-teal-500/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Sparkles size={22} className="text-teal-600 animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Корисні контакти та сервіси</h2>
@@ -78,7 +78,7 @@ export default function ServicesCard() {
           </div>
           <div className="flex items-center gap-2">
             {services.length > 0 && (
-              <div className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+              <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">
                 Нові послуги
               </div>
             )}
@@ -86,7 +86,7 @@ export default function ServicesCard() {
               animate={{ rotate: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <TrendingUp size={18} className="text-purple-600" />
+              <TrendingUp size={18} className="text-teal-600" />
             </motion.div>
           </div>
         </div>
@@ -112,13 +112,13 @@ export default function ServicesCard() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
                 onClick={() => navigate(`/services/${service.id}`)}
-                className="p-4 rounded-2xl bg-white border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-[1.01] overflow-hidden"
+                className="p-4 rounded-2xl bg-white border-2 border-gray-300 hover:border-teal-400 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-[1.01] overflow-hidden"
               >
                 <div className="flex justify-between items-start gap-3 mb-2">
-                  <h3 className="text-sm font-extrabold text-gray-900 max-w-[70%] line-clamp-2 group-hover:text-violet-600 transition-colors">
+                  <h3 className="text-sm font-extrabold text-gray-900 max-w-[70%] line-clamp-2 group-hover:text-teal-600 transition-colors">
                     {service.name}
                   </h3>
-                  <span className="flex-shrink-0 px-2 py-1 bg-white/90 text-gray-600 text-[10px] font-semibold rounded border border-gray-100">
+                  <span className="flex-shrink-0 px-2 py-1 bg-teal-50 text-teal-600 text-[10px] font-semibold rounded border border-teal-100">
                     {getCategoryLabel(service.category)}
                   </span>
                 </div>
@@ -160,7 +160,7 @@ export default function ServicesCard() {
             navigate('/services');
           }}
           disabled={loading}
-          className="w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

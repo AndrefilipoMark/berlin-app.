@@ -46,6 +46,27 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      animation: {
+        'gentle-pulse': 'gentle-pulse 2s ease-in-out infinite',
+        'heartbeat': 'heartbeat 2s ease-in-out infinite',
+        'breathing': 'breathing 3s ease-in-out infinite',
+      },
+      keyframes: {
+        'gentle-pulse': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.8', transform: 'scale(1.1)' },
+        },
+        'heartbeat': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '25%': { transform: 'scale(1.08)' },
+          '50%': { transform: 'scale(1)' },
+          '75%': { transform: 'scale(1.05)' },
+        },
+        'breathing': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.08)' },
+        },
+      },
     },
   },
   plugins: [],

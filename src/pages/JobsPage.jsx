@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { 
-  Briefcase, Search, Loader2,
+  Briefcase, Loader2,
   Cpu, Hammer, Utensils, Truck, Wrench, Stethoscope, Compass, HelpCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -28,7 +28,6 @@ export default function JobsPage() {
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [authorNamesMap, setAuthorNamesMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -57,7 +56,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [jobs, searchTerm, selectedCategory]);
+  }, [jobs, selectedCategory]);
 
   const loadJobs = async () => {
     try {
@@ -79,12 +78,6 @@ export default function JobsPage() {
 
   const applyFilters = () => {
     let result = [...jobs];
-    if (searchTerm) {
-      result = result.filter(job =>
-        job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
     if (selectedCategory) {
       result = result.filter(job => job.category === selectedCategory);
     }
@@ -127,14 +120,14 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-purple-50/50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-gray-50/50 to-blue-50/30 p-4 md:p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Page Header */}
-        <div className="mb-10 text-center md:text-left">
+        <div className="mb-8 md:mb-10 text-center md:text-left">
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4"
+            className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 md:mb-4"
           >
             Вакансії у Берліні
           </motion.h1>
@@ -142,45 +135,33 @@ export default function JobsPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-slate-600 max-w-2xl"
+            className="text-base md:text-lg text-gray-600 max-w-2xl"
           >
             Знаходьте перевірену роботу або публікуйте власні пропозиції для української спільноти.
           </motion.p>
         </div>
 
-        {/* Search & Category Chips */}
-        <div className="bg-white rounded-[32px] p-6 shadow-xl border border-slate-100 mb-8">
-          <div className="flex flex-col gap-6">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input
-                type="text"
-                placeholder="Шукати вакансії..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-azure-blue focus:bg-white transition-all text-slate-900 outline-none placeholder:text-slate-400 shadow-inner"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {JOBS_CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
-                      isActive
-                        ? 'bg-azure-blue text-white shadow-lg shadow-blue-500/30 scale-105'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    <Icon size={16} />
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Category Filters */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2.5 md:gap-3">
+            {JOBS_CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  <Icon size={16} className={isActive ? 'text-white' : 'text-gray-500'} />
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

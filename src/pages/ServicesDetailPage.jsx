@@ -110,7 +110,7 @@ export default function ServicesDetailPage() {
       <div className="p-4 md:p-8">
         <div className="max-w-[900px] mx-auto">
           <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 text-center">
-            <div className="w-16 h-16 bg-purple-600/10 rounded-full animate-pulse mx-auto mb-4" />
+            <div className="w-16 h-16 bg-teal-600/10 rounded-full animate-pulse mx-auto mb-4" />
             <p className="text-gray-500">Завантаження...</p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export default function ServicesDetailPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Сервіс не знайдено</h2>
             <button
               onClick={() => navigate('/services')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
             >
               Повернутися до списку
             </button>
@@ -155,7 +155,7 @@ export default function ServicesDetailPage() {
         <motion.button
           whileHover={{ x: -3 }}
           onClick={() => navigate('/services')}
-          className="flex items-center gap-2 text-gray-600 hover:text-purple-600 font-semibold mb-6 transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-teal-600 font-semibold mb-6 transition-colors"
         >
           <ArrowLeft size={20} />
           <span>Назад до послуг</span>
@@ -171,7 +171,7 @@ export default function ServicesDetailPage() {
                   {service.name}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-600">
-                  <CategoryIcon size={18} className="text-purple-600" />
+                  <CategoryIcon size={18} className="text-teal-600" />
                   <span className="font-semibold">{getCategoryLabel(service.category)}</span>
                 </div>
               </div>
@@ -179,7 +179,7 @@ export default function ServicesDetailPage() {
                 {canEdit && (
                   <button
                     onClick={() => setEditingService(service)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-purple-600/10 text-purple-600 rounded-xl hover:bg-purple-600/20 transition-colors font-semibold text-xs md:text-sm whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-teal-600/10 text-teal-600 rounded-xl hover:bg-teal-600/20 transition-colors font-semibold text-xs md:text-sm whitespace-nowrap"
                   >
                     <Edit2 size={14} className="md:w-4 md:h-4" />
                     <span className="hidden sm:inline">Редагувати</span>
@@ -259,10 +259,10 @@ export default function ServicesDetailPage() {
                 {service.phone && (
                   <a
                     href={`tel:${service.phone}`}
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-600 hover:bg-purple-600/5 transition-all group"
+                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-600 hover:bg-teal-600/5 transition-all group"
                   >
-                    <Phone size={20} className="text-slate-500 group-hover:text-purple-600" />
-                    <span className="text-slate-700 font-medium group-hover:text-purple-600">
+                    <Phone size={20} className="text-slate-500 group-hover:text-teal-600" />
+                    <span className="text-slate-700 font-medium group-hover:text-teal-600">
                       {service.phone}
                     </span>
                   </a>
@@ -270,10 +270,10 @@ export default function ServicesDetailPage() {
                 {service.email && (
                   <a
                     href={`mailto:${service.email}`}
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-600 hover:bg-purple-600/5 transition-all group"
+                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-600 hover:bg-teal-600/5 transition-all group"
                   >
-                    <Mail size={20} className="text-slate-500 group-hover:text-purple-600" />
-                    <span className="text-slate-700 font-medium group-hover:text-purple-600">
+                    <Mail size={20} className="text-slate-500 group-hover:text-teal-600" />
+                    <span className="text-slate-700 font-medium group-hover:text-teal-600">
                       {service.email}
                     </span>
                   </a>
@@ -283,10 +283,10 @@ export default function ServicesDetailPage() {
                     href={service.website.startsWith('http') ? service.website : `https://${service.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-600 hover:bg-purple-600/5 transition-all group"
+                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 hover:border-teal-600 hover:bg-teal-600/5 transition-all group"
                   >
-                    <Globe size={20} className="text-slate-500 group-hover:text-purple-600" />
-                    <span className="text-slate-700 font-medium group-hover:text-purple-600">
+                    <Globe size={20} className="text-slate-500 group-hover:text-teal-600" />
+                    <span className="text-slate-700 font-medium group-hover:text-teal-600">
                       {service.website}
                     </span>
                   </a>
@@ -416,7 +416,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-600 to-teal-500 rounded-2xl flex items-center justify-center">
                 <Stethoscope size={24} className="text-white" />
               </div>
               <h2 className="text-2xl font-extrabold text-gray-900">Редагувати сервіс</h2>
@@ -437,7 +437,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 placeholder="Dr. Schmidt"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-all"
               />
             </div>
 
@@ -464,7 +464,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 placeholder="Prenzlauer Berg, Kastanienallee 12"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-all"
               />
             </div>
 
@@ -499,7 +499,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                       }}
                       className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                         isSelected
-                          ? 'bg-purple-600 text-white'
+                          ? 'bg-teal-600 text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
@@ -517,7 +517,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 placeholder="+49 30 123 4567"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-all"
               />
             </div>
 
@@ -528,7 +528,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 placeholder="info@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-all"
               />
             </div>
 
@@ -539,7 +539,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 placeholder="https://example.com"
                 value={formData.website}
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600 transition-all"
               />
             </div>
           </div>
@@ -554,7 +554,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Збереження...' : 'Зберегти зміни'}
             </button>

@@ -50,8 +50,8 @@ export default function Housing() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-vibrant-yellow to-amber-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Home size={22} className="text-white" />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-vibrant-yellow/10 text-vibrant-yellow border border-vibrant-yellow/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Home size={22} className="text-vibrant-yellow animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Житло</h2>
@@ -91,7 +91,7 @@ export default function Housing() {
                   transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                   whileHover={{ x: -3 }}
                   onClick={() => navigate(`/housing/${listing.id}`)}
-                  className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border border-gray-100 hover:border-amber-200 transition-all cursor-pointer group"
+                  className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-amber-400 transition-all cursor-pointer group"
                 >
                   <div className="flex justify-between items-start gap-2 mb-2">
                     <h3 className="font-bold text-sm text-gray-900 group-hover:text-amber-600 transition-colors flex-1 line-clamp-1">

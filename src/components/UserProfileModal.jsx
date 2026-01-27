@@ -173,6 +173,7 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
     return (
       <AnimatePresence>
         <motion.div
+          key="loading-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -180,6 +181,7 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
           onClick={onClose}
         >
           <motion.div
+            key="loading-content"
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
@@ -226,8 +228,10 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <AnimatePresence>
+    <>
+    <AnimatePresence mode="wait">
       <motion.div
+        key={`profile-modal-${userId}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -411,16 +415,18 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
           </div>
         </motion.div>
       </motion.div>
+    </AnimatePresence>
 
-      {showQuickMessage && (
-        <QuickMessageModal
-          receiverId={userId}
-          receiverName={profile.full_name || 'Користувач'}
-          onClose={() => setShowQuickMessage(false)}
-          onSent={() => setShowQuickMessage(false)}
-        />
-      )}
+    {showQuickMessage && (
+      <QuickMessageModal
+        receiverId={userId}
+        receiverName={profile.full_name || 'Користувач'}
+        onClose={() => setShowQuickMessage(false)}
+        onSent={() => setShowQuickMessage(false)}
+      />
+    )}
 
+    {showDeleteConfirm && (
       <ConfirmModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
@@ -432,7 +438,9 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
         confirmColor="red"
         loading={actionLoading}
       />
+    )}
 
+    {showBlockConfirm && (
       <ConfirmModal
         isOpen={showBlockConfirm}
         onClose={() => setShowBlockConfirm(false)}
@@ -444,6 +452,7 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
         confirmColor="red"
         loading={actionLoading}
       />
-    </AnimatePresence>
+    )}
+  </>
   );
 }

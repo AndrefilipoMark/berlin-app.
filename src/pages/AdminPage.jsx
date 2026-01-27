@@ -320,7 +320,7 @@ export default function AdminPage() {
               { label: 'Користувачі', value: stats.users, icon: Users, color: 'from-blue-500 to-cyan-500' },
               { label: 'Вакансії', value: stats.jobs, icon: Briefcase, color: 'from-azure-blue to-blue-600' },
               { label: 'Житло', value: stats.housing, icon: HomeIcon, color: 'from-vibrant-yellow to-orange-400' },
-              { label: 'Сервіси', value: stats.services, icon: Stethoscope, color: 'from-purple-500 to-pink-600' },
+              { label: 'Сервіси', value: stats.services, icon: Stethoscope, color: 'from-teal-500 to-teal-600' },
               { label: 'Пости форуму', value: stats.forumPosts, icon: MessageCircle, color: 'from-green-500 to-emerald-600' },
               { label: 'Повідомлення', value: stats.messages, icon: MessageCircle, color: 'from-red-500 to-pink-600' },
               { label: 'Повідомлення адміну', value: stats.adminMessages, icon: Mail, color: 'from-orange-500 to-red-600' },

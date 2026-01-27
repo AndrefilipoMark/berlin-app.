@@ -71,7 +71,7 @@ export default function CommunityPulse() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-azure-blue to-azure-blue/70 rounded-2xl flex items-center justify-center shadow-lg">
-              <TrendingUp size={22} className="text-white" />
+              <TrendingUp size={22} className="text-white animate-heartbeat" />
             </div>
             <div>
               <h2 className="text-2xl font-extrabold text-gray-900">Community Pulse</h2>

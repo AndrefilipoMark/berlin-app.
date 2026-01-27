@@ -112,14 +112,31 @@ export default function ChatPage() {
 
   // Оновлюємо presence коли змінюється профіль
   useEffect(() => {
+    if (!user?.id || !channelRef.current) return;
+    
+    const updatePresence = async () => {
+      await channelRef.current.track({
+        user_id: user.id,
+        full_name: profile?.full_name || user.email?.split('@')[0] || 'Користувач',
+        avatar_url: profile?.avatar_url || null,
+        online_at: new Date().toISOString(),
+      });
+    };
+    
+    updatePresence();
+  }, [profile?.full_name, profile?.avatar_url, user?.id]);
+  
+  // Оновлюємо presence коли змінюється профіль
+  useEffect(() => {
     if (channelRef.current && user?.id && profile?.full_name) {
       channelRef.current.track({
         user_id: user.id,
         full_name: profile.full_name,
+        avatar_url: profile.avatar_url || null,
         online_at: new Date().toISOString(),
       });
     }
-  }, [profile?.full_name, user?.id]);
+  }, [profile?.full_name, profile?.avatar_url, user?.id]);
 
   useEffect(() => {
     // Використовуємо розумний scroll
@@ -198,8 +215,49 @@ export default function ChatPage() {
     try {
       setLoading(true);
       const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
-      const data = await Promise.race([getMessages(100), timeout(10000)]);
-      setMessages(Array.isArray(data) ? data : []);
+      const messagesData = await Promise.race([getMessages(100), timeout(10000)]);
+      
+      if (!Array.isArray(messagesData)) {
+        setMessages([]);
+        return;
+      }
+      
+      // Завантажуємо профілі для всіх повідомлень
+      const userIds = [...new Set(messagesData.map(m => m.user_id).filter(Boolean))];
+      const profilesMap = new Map();
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, district, is_admin')
+            .in('id', userIds);
+          
+          if (profilesData) {
+            profilesData.forEach(p => profilesMap.set(p.id, p));
+          }
+        } catch (profileError) {
+          console.warn('Error loading profiles for messages:', profileError);
+        }
+      }
+      
+      // Додаємо профілі до повідомлень
+      const messagesWithProfiles = messagesData.map(msg => {
+        const profile = profilesMap.get(msg.user_id);
+        return {
+          ...msg,
+          profiles: profile || null
+        };
+      });
+      
+      console.log('✅ Messages loaded with profiles:', messagesWithProfiles.length, 'messages');
+      messagesWithProfiles.forEach(msg => {
+        if (msg.profiles?.avatar_url) {
+          console.log(`  - Message from ${msg.profiles.full_name}: avatar_url = ${msg.profiles.avatar_url}`);
+        }
+      });
+      
+      setMessages(messagesWithProfiles);
       setTimeout(() => scrollToBottom(), 300);
     } catch (e) {
       console.warn('loadMessages error or timeout:', e);
@@ -332,6 +390,7 @@ export default function ChatPage() {
           await channel.track({
             user_id: currentUser?.id,
             full_name: profile?.full_name || currentUser?.email?.split('@')[0] || 'Користувач',
+            avatar_url: profile?.avatar_url || null,
             online_at: new Date().toISOString(),
           });
         }
@@ -601,12 +660,22 @@ export default function ChatPage() {
                     {onlineUsers.slice(0, 3).map((presence, idx) => (
                       <div
                         key={presence.user_id || idx}
-                        className="w-6 h-6 bg-gradient-to-br from-azure-blue to-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm"
+                        className="w-6 h-6 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center"
                         title={presence.full_name || 'Користувач'}
                       >
-                        <span className="text-white text-xs font-bold">
-                          {(presence.full_name || '?').charAt(0).toUpperCase()}
-                        </span>
+                        {presence.avatar_url ? (
+                          <img 
+                            src={presence.avatar_url} 
+                            alt={presence.full_name || 'Avatar'} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-azure-blue to-blue-600 flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">
+                              {(presence.full_name || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))}
                     {onlineUsers.length > 3 && (
@@ -622,11 +691,21 @@ export default function ChatPage() {
               onClick={() => handleProfileClick(user.id)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
-                  {profile.full_name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {profile.avatar_url ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                  <img 
+                    src={profile.avatar_url} 
+                    alt={profile.full_name || 'Avatar'} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">
+                    {profile.full_name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <span className="text-sm font-semibold text-gray-900 hidden md:block">
                 {profile.full_name || user.email?.split('@')[0] || 'Гість'}
               </span>
@@ -675,15 +754,43 @@ export default function ChatPage() {
                       onClick={() => handleProfileClick(message.user_id)}
                       className="flex-shrink-0 hover:scale-110 transition-transform"
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                        isMine
-                          ? 'bg-gradient-to-br from-vibrant-yellow to-orange-400'
-                          : 'bg-gradient-to-br from-azure-blue to-blue-600'
-                      }`}>
-                        <span className="text-white font-bold text-sm">
-                          {getUserInitial(message)}
-                        </span>
-                      </div>
+                      {(() => {
+                        const avatarUrl = message.profiles?.avatar_url || message.avatar_url;
+                        if (avatarUrl) {
+                          return (
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md">
+                              <img 
+                                src={avatarUrl} 
+                                alt={getAuthorName(message)} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Якщо зображення не завантажилось, показуємо placeholder
+                                  e.target.style.display = 'none';
+                                  const placeholder = document.createElement('div');
+                                  placeholder.className = `w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+                                    isMine
+                                      ? 'bg-gradient-to-br from-vibrant-yellow to-orange-400'
+                                      : 'bg-gradient-to-br from-azure-blue to-blue-600'
+                                  }`;
+                                  placeholder.innerHTML = `<span class="text-white font-bold text-sm">${getUserInitial(message)}</span>`;
+                                  e.target.parentElement.replaceWith(placeholder);
+                                }}
+                              />
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+                            isMine
+                              ? 'bg-gradient-to-br from-vibrant-yellow to-orange-400'
+                              : 'bg-gradient-to-br from-azure-blue to-blue-600'
+                          }`}>
+                            <span className="text-white font-bold text-sm">
+                              {getUserInitial(message)}
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </button>
 
                     {/* Message Bubble */}

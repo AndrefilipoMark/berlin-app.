@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
-  Search,
   MapPin,
   Loader2,
   Compass,
@@ -36,7 +35,6 @@ export default function ServicesPage() {
   const [filteredServices, setFilteredServices] = useState([]);
   const [authorNamesMap, setAuthorNamesMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -65,20 +63,11 @@ export default function ServicesPage() {
 
   useEffect(() => {
     let result = [...services];
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.name?.toLowerCase().includes(q) ||
-          s.profession?.toLowerCase().includes(q) ||
-          s.description?.toLowerCase().includes(q)
-      );
-    }
     if (selectedCategory) {
       result = result.filter((s) => s.category === selectedCategory);
     }
     setFilteredServices(result);
-  }, [services, searchTerm, selectedCategory]);
+  }, [services, selectedCategory]);
 
   const loadServices = async () => {
     try {
@@ -125,14 +114,14 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-pink-50/50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50/30 via-gray-50/50 to-cyan-50/30 p-4 md:p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Page Header */}
-        <div className="mb-10 text-center md:text-left">
+        <div className="mb-8 md:mb-10 text-center md:text-left">
           <motion.h1
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4"
+            className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 md:mb-4"
           >
             Корисні контакти та сервіси
           </motion.h1>
@@ -140,62 +129,40 @@ export default function ServicesPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-slate-600 max-w-2xl"
+            className="text-base md:text-lg text-gray-600 max-w-2xl"
           >
             Знаходьте україномовних лікарів, юристів та перевірені заклади. Підтримка рідною мовою у серці Німеччини.
           </motion.p>
         </div>
 
-        {/* Search & Category Chips */}
-        <div className="bg-white rounded-[32px] p-6 shadow-xl border border-slate-100 mb-8">
-          <div className="flex flex-col gap-6">
-            <div className="relative">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={20}
-              />
-              <input
-                type="text"
-                placeholder="Шукати за назвою, професією або описом..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 rounded-2xl border-2 border-transparent focus:border-purple-600 focus:bg-white transition-all text-slate-900 outline-none placeholder:text-slate-400 shadow-inner"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {SERVICES_CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
-                      isActive
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    <Icon size={16} />
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Results bar */}
-        <div className="flex items-center gap-3 mb-6 px-2">
-          <div className="px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-xs font-bold uppercase tracking-wider">
-            Знайдено: {loading ? '...' : filteredServices.length}
+        {/* Category Filters */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2.5 md:gap-3">
+            {SERVICES_CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  <Icon size={16} className={isActive ? 'text-white' : 'text-gray-500'} />
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Content */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 size={48} className="text-purple-600 animate-spin mb-4" />
+            <Loader2 size={48} className="text-teal-600 animate-spin mb-4" />
             <p className="text-slate-500 font-medium italic">Завантажуємо послуги...</p>
           </div>
         ) : filteredServices.length === 0 ? (
@@ -227,28 +194,38 @@ export default function ServicesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => navigate(`/services/${service.id}`)}
-                  className="bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-xl border border-gray-100 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01] overflow-hidden"
+                  className="bg-white rounded-3xl p-5 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] border border-gray-100 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01] overflow-hidden"
                 >
-                  {/* Назва + категорія: flex, без накладання */}
-                  <div className="flex justify-between items-start gap-4 mb-1">
-                    <h3 className="text-xl font-extrabold text-gray-900 leading-tight max-w-[70%] line-clamp-2 group-hover:text-violet-600 transition-colors">
+                  {/* Header: Name + Category */}
+                  <div className="flex justify-between items-start gap-3 mb-3">
+                    <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-teal-600 transition-colors">
                       {service.name}
                     </h3>
-                    <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 text-xs font-semibold rounded-xl border border-purple-100">
-                      <Icon size={14} className="text-purple-500" />
-                      {categoryLabel}
+                    <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 bg-teal-50 text-teal-600 text-xs font-semibold rounded-xl border border-teal-100">
+                      <Icon size={13} className="text-teal-500" />
+                      <span className="hidden sm:inline">{categoryLabel}</span>
                     </span>
                   </div>
 
                   <div className="space-y-3 flex-1">
+                    {/* Profession Badge - if exists */}
+                    {service.profession && (
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-semibold border border-teal-100">
+                        <span>{service.profession}</span>
+                      </div>
+                    )}
+
+                    {/* Location with colored icon */}
                     {service.address && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={16} className="text-gray-400 flex-shrink-0" />
+                        <MapPin size={16} className="text-teal-500 flex-shrink-0" />
                         <span className="line-clamp-1">{service.address?.split(',')[0] || service.address}</span>
                       </div>
                     )}
+
+                    {/* Author - Clickable Avatar */}
                     {(service.user_id || service.author_name) && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm">
                         {service.user_id ? (
                           <button
                             type="button"
@@ -261,48 +238,49 @@ export default function ServicesPage() {
                               setSelectedUserId(service.user_id);
                               setShowUserModal(true);
                             }}
-                            className="flex items-center gap-2 min-w-0 group/author text-left"
+                            className="flex items-center gap-2 min-w-0 group/author text-left hover:bg-teal-50/50 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
                           >
                             {profile?.avatar_url ? (
                               <img
                                 src={profile.avatar_url}
                                 alt=""
-                                className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                                className="w-7 h-7 rounded-full object-cover flex-shrink-0 border-2 border-teal-100 group-hover/author:border-teal-300 transition-colors"
                               />
                             ) : (
-                              <span className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
+                              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
                                 {(authorName || 'К').charAt(0).toUpperCase()}
                               </span>
                             )}
-                            <span className="truncate font-medium group-hover/author:text-blue-600 group-hover/author:underline transition-colors">
+                            <span className="truncate font-medium text-gray-700 group-hover/author:text-teal-600 transition-colors">
                               {authorName}
                             </span>
                           </button>
                         ) : (
-                          <>
-                            <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500 text-xs font-bold">
+                          <div className="flex items-center gap-2">
+                            <span className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500 text-xs font-bold">
                               {(authorName || 'К').charAt(0).toUpperCase()}
                             </span>
-                            <span className="truncate">{authorName}</span>
-                          </>
+                            <span className="truncate text-gray-600">{authorName}</span>
+                          </div>
                         )}
                       </div>
                     )}
 
+                    {/* Description - Limited to 3 lines on mobile */}
                     {service.description && (
-                      <p className="text-gray-600 leading-relaxed line-clamp-4 text-sm pt-1">
+                      <p className="text-gray-600 leading-relaxed line-clamp-3 md:line-clamp-4 text-sm pt-1">
                         {service.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Мови — тільки код: UA, RU, DE, EN, без дублікатів */}
+                  {/* Languages */}
                   {Array.isArray(service.languages) && service.languages.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-4">
+                    <div className="flex flex-wrap gap-1.5 mt-4 pt-4 border-t border-gray-100">
                       {[...new Set(service.languages.map(normalizeLanguageCode))].map((code) => (
                         <span
                           key={code}
-                          className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded"
+                          className="inline-flex items-center px-2 py-0.5 bg-gray-50 text-gray-600 text-[10px] font-medium rounded border border-gray-200"
                         >
                           {code}
                         </span>
@@ -310,7 +288,8 @@ export default function ServicesPage() {
                     </div>
                   )}
 
-                  <div className="pt-4 mt-4 border-t border-gray-100">
+                  {/* Footer: Date */}
+                  <div className="pt-3 mt-3 border-t border-gray-100">
                     <span className="text-xs text-gray-400">
                       {formatDate(service.updated_at || service.created_at)}
                     </span>

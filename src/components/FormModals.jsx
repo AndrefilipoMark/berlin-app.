@@ -473,7 +473,7 @@ export function ServiceFormModal({ onClose }) {
     <FormModalContainer
       title="Додати сервіс"
       icon={Sparkles}
-      iconColor="from-purple-500 to-pink-600"
+      iconColor="from-teal-500 to-teal-600"
       onClose={onClose}
     >
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">

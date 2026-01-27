@@ -75,8 +75,8 @@ export default function Jobs() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-azure-blue to-azure-blue/70 rounded-2xl flex items-center justify-center shadow-lg">
-              <Briefcase size={22} className="text-white" />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-azure-blue/10 text-azure-blue border border-azure-blue/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Briefcase size={22} className="text-azure-blue animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Вакансії</h2>
@@ -126,7 +126,7 @@ export default function Jobs() {
                 transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                 whileHover={{ x: -3 }}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border border-gray-100 hover:border-blue-200 transition-all cursor-pointer group"
+                className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-blue-400 transition-all cursor-pointer group"
               >
                 <div className="flex justify-between items-start gap-2 mb-2">
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-azure-blue transition-colors flex-1 line-clamp-1">

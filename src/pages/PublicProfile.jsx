@@ -153,6 +153,13 @@ export default function PublicProfile() {
         return;
       }
 
+      console.log('✅ Profile loaded:', {
+        id: data.id,
+        full_name: data.full_name,
+        avatar_url: data.avatar_url,
+        has_avatar: !!data.avatar_url
+      });
+
       setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -355,14 +362,32 @@ export default function PublicProfile() {
             transition={{ delay: 0.1 }}
             className="lg:col-span-2 bg-white rounded-3xl p-8 md:p-10 shadow-sm border border-gray-200"
           >
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mb-8">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-8">
               {/* Avatar */}
               <div className="relative flex-shrink-0">
-                <div className="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-6xl md:text-7xl">
-                    {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : profile.email?.charAt(0).toUpperCase() || 'У'}
-                  </span>
-                </div>
+                {profile.avatar_url ? (
+                  <div className="w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    <img 
+                      src={profile.avatar_url} 
+                      alt={profile.full_name || 'Avatar'} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Якщо зображення не завантажилось, показуємо placeholder
+                        e.target.style.display = 'none';
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg';
+                        placeholder.innerHTML = `<span class="text-white font-bold text-6xl md:text-7xl">${profile.full_name ? profile.full_name.charAt(0).toUpperCase() : profile.email?.charAt(0).toUpperCase() || 'У'}</span>`;
+                        e.target.parentElement.replaceWith(placeholder);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-6xl md:text-7xl">
+                      {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : profile.email?.charAt(0).toUpperCase() || 'У'}
+                    </span>
+                  </div>
+                )}
                 {isOwnProfile() && (
                   <div className="absolute -top-2 -right-2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-md">
                     Це ви
@@ -371,37 +396,39 @@ export default function PublicProfile() {
               </div>
 
               {/* Name and Basic Info */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 text-center md:text-left">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
                   {profile.full_name || 'Користувач'}
                 </h1>
-                <div className="flex flex-wrap items-center gap-3 mb-6">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
                   {profile.district && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl text-gray-700 font-semibold">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl text-gray-700 font-semibold">
                       <MapPin size={18} className="text-blue-600" />
                       <span>{profile.district}</span>
                     </div>
                   )}
                   {(profile.gender === 'male' || profile.gender === 'female') && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl text-gray-700 font-semibold">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-2xl text-gray-700 font-semibold">
                       <Users size={18} className="text-blue-600" />
                       <span>{profile.gender === 'male' ? 'Чоловік' : 'Жінка'}</span>
                     </div>
                   )}
                   {profile.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 px-4 py-2 bg-white border border-gray-200 rounded-2xl">
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 px-4 py-2 bg-white border border-gray-200 rounded-2xl">
                       <Mail size={16} className="text-blue-600" />
                       <span>{profile.email}</span>
                     </div>
                   )}
                 </div>
                 {isOwnProfile() && (
-                  <button
-                    onClick={() => navigate('/profile')}
-                    className="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl font-bold hover:shadow-lg transition-all"
-                  >
-                    Редагувати профіль
-                  </button>
+                  <div className="flex justify-center md:justify-start">
+                    <button
+                      onClick={() => navigate('/profile')}
+                      className="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl font-bold hover:shadow-lg transition-all"
+                    >
+                      Редагувати профіль
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -409,11 +436,11 @@ export default function PublicProfile() {
             {/* Bio Section */}
             {profile.bio && (
               <div className="p-6 bg-white border border-gray-200 rounded-2xl">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center justify-center gap-2">
                   <User size={20} className="text-blue-600" />
                   Про себе
                 </h3>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-center">
                   {profile.bio}
                 </p>
               </div>
@@ -431,6 +458,403 @@ export default function PublicProfile() {
               </div>
             )}
           </motion.div>
+
+          {/* Friends Section - Only for own profile - Moved above side cards */}
+          {isOwnProfile() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-200"
+            >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Users size={28} className="text-blue-600" strokeWidth={2} />
+                Друзі
+                {friends.length > 0 && (
+                  <span className="text-lg font-normal text-gray-500">
+                    ({friends.length})
+                  </span>
+                )}
+              </h2>
+            </div>
+
+            {/* Friend Requests */}
+            {friendRequests.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Bell size={20} className="text-blue-600" strokeWidth={2} />
+                  <h3 className="text-lg font-bold text-gray-900">Запити на дружбу</h3>
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                    {friendRequests.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {friendRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="p-4 bg-white border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        {request.user?.avatar_url ? (
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md flex-shrink-0">
+                            <img 
+                              src={request.user.avatar_url} 
+                              alt={request.user.full_name || 'Avatar'} 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold">
+                              {(request.user?.full_name || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-gray-900">
+                            {request.user?.full_name || 'Користувач'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            хоче додати вас у друзі
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0 mt-1">
+                            {request.user?.district && (
+                              <span className="text-xs text-gray-500">{request.user.district}</span>
+                            )}
+                            {(request.user?.gender === 'male' || request.user?.gender === 'female') && (
+                              <span className="text-xs text-amber-600">
+                                {request.user.gender === 'male' ? 'Чоловік' : 'Жінка'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAcceptRequest(request.id)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center gap-2"
+                        >
+                          <Check size={18} />
+                          Прийняти
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(request.id)}
+                          className="px-4 py-2 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all flex items-center gap-2"
+                        >
+                          <XIcon size={18} />
+                          Відхилити
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Friends List */}
+            {friendsLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 size={32} className="animate-spin text-blue-600" />
+              </div>
+            ) : friends.length === 0 ? (
+              <div className="text-center py-12">
+                <Users size={48} className="text-gray-300 mx-auto mb-4" strokeWidth={1.5} />
+                <p className="text-gray-500">У вас поки немає друзів</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Додавайте друзів, клікаючи на авторів в оголошеннях
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Search and View Toggle */}
+                <div className="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                  <div className="relative w-full sm:w-auto sm:flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={2} />
+                    <input
+                      type="text"
+                      placeholder="Пошук друзів..."
+                      value={friendsSearchTerm}
+                      onChange={(e) => setFriendsSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+                    <button
+                      onClick={() => setFriendsViewMode('grid')}
+                      className={`p-2 rounded-lg transition-all ${
+                        friendsViewMode === 'grid'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      title="Сітка"
+                    >
+                      <Grid3x3 size={18} strokeWidth={2} />
+                    </button>
+                    <button
+                      onClick={() => setFriendsViewMode('list')}
+                      className={`p-2 rounded-lg transition-all ${
+                        friendsViewMode === 'list'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      title="Список"
+                    >
+                      <List size={18} strokeWidth={2} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filtered Friends */}
+                {(() => {
+                  const filteredFriends = friends.filter((friend) => {
+                    const name = friend.friend_profile?.full_name || '';
+                    const district = friend.friend_profile?.district || '';
+                    const searchLower = friendsSearchTerm.toLowerCase();
+                    return name.toLowerCase().includes(searchLower) || district.toLowerCase().includes(searchLower);
+                  });
+
+                  if (filteredFriends.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <Search size={32} className="text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500">Друзів не знайдено</p>
+                      </div>
+                    );
+                  }
+
+                  return friendsViewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                      {filteredFriends.map((friend) => (
+                        <motion.div
+                          key={friend.id}
+                          whileHover={{ scale: 1.02 }}
+                          className="p-3 bg-white rounded-xl border border-gray-200 hover:border-blue-600/30 transition-all relative min-w-0 shadow-sm"
+                        >
+                          <div 
+                            className="flex flex-col items-center text-center cursor-pointer min-w-0 w-full"
+                            onClick={() => navigate(`/profile/${friend.friend_profile.id}`)}
+                          >
+                            {friend.friend_profile?.avatar_url ? (
+                              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md mb-2 flex-shrink-0">
+                                <img 
+                                  src={friend.friend_profile.avatar_url} 
+                                  alt={friend.friend_profile.full_name || 'Avatar'} 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-2 flex-shrink-0">
+                                <span className="text-white font-bold text-lg">
+                                  {(friend.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Ім'я з обрізанням */}
+                            <div className="w-full min-w-0 mb-1">
+                              <p className="font-bold text-gray-900 text-xs truncate" title={friend.friend_profile?.full_name || 'Користувач'}>
+                                {friend.friend_profile?.full_name || 'Користувач'}
+                              </p>
+                            </div>
+                            
+                            {/* Район / Стать */}
+                            <div className="w-full min-w-0 mb-2 space-y-0.5">
+                              {friend.friend_profile?.district && (
+                                <p className="text-[10px] text-gray-500 truncate" title={friend.friend_profile.district}>
+                                  {friend.friend_profile.district}
+                                </p>
+                              )}
+                              {(friend.friend_profile?.gender === 'male' || friend.friend_profile?.gender === 'female') && (
+                                <p className="text-[10px] text-amber-600">
+                                  {friend.friend_profile.gender === 'male' ? 'Чоловік' : 'Жінка'}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/messages/${friend.friend_profile.id}`);
+                              }}
+                              className="mt-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold hover:bg-blue-700 transition-all w-full"
+                            >
+                              Написати
+                            </button>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                setSelectedFriend(friend);
+                                setShowDeleteConfirm(true);
+                              }}
+                              className="flex-1 px-2 py-1.5 bg-red-500/10 text-red-600 rounded-lg text-[10px] font-semibold hover:bg-red-500/20 transition-all flex items-center justify-center gap-1 min-w-0"
+                              title="Видалити з друзів"
+                            >
+                              <Trash2 size={12} className="flex-shrink-0" />
+                              <span className="truncate hidden sm:inline">Видалити</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedFriend(friend);
+                                setShowBlockConfirm(true);
+                              }}
+                              className="flex-1 px-2 py-1.5 bg-orange-500/10 text-orange-600 rounded-lg text-[10px] font-semibold hover:bg-orange-500/20 transition-all flex items-center justify-center gap-1 min-w-0"
+                              title="Додати до чорного списку"
+                            >
+                              <Ban size={12} className="flex-shrink-0" />
+                              <span className="truncate hidden sm:inline">Заблокувати</span>
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredFriends.map((friend) => (
+                        <motion.div
+                          key={friend.id}
+                          whileHover={{ x: 4 }}
+                          className="p-3 bg-white rounded-xl border border-gray-200 hover:border-blue-600/30 transition-all flex items-center gap-3 cursor-pointer shadow-sm"
+                          onClick={() => navigate(`/profile/${friend.friend_profile.id}`)}
+                        >
+                          {friend.friend_profile?.avatar_url ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md flex-shrink-0">
+                              <img 
+                                src={friend.friend_profile.avatar_url} 
+                                alt={friend.friend_profile.full_name || 'Avatar'} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white font-bold text-lg">
+                                {(friend.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 text-sm truncate" title={friend.friend_profile?.full_name || 'Користувач'}>
+                              {friend.friend_profile?.full_name || 'Користувач'}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0">
+                              {friend.friend_profile?.district && (
+                                <p className="text-xs text-gray-500 truncate" title={friend.friend_profile.district}>
+                                  {friend.friend_profile.district}
+                                </p>
+                              )}
+                              {(friend.friend_profile?.gender === 'male' || friend.friend_profile?.gender === 'female') && (
+                                <span className="text-xs text-amber-600">
+                                  {friend.friend_profile.gender === 'male' ? 'Чоловік' : 'Жінка'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/messages/${friend.friend_profile.id}`);
+                              }}
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-all"
+                            >
+                              Написати
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedFriend(friend);
+                                setShowDeleteConfirm(true);
+                              }}
+                              className="p-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500/20 transition-all"
+                              title="Видалити з друзів"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedFriend(friend);
+                                setShowBlockConfirm(true);
+                              }}
+                              className="p-2 bg-orange-500/10 text-orange-600 rounded-lg hover:bg-orange-500/20 transition-all"
+                              title="Заблокувати"
+                            >
+                              <Ban size={16} />
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Blocked Users Section */}
+            {blockedUsers.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <UserX size={20} className="text-blue-600" strokeWidth={2} />
+                  Заблоковані користувачі ({blockedUsers.length})
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {blockedUsers.map((blocked) => {
+                    const blockedUser = blocked.blocked_user || { id: blocked.blocked_user_id, full_name: 'Користувач', district: null };
+                    return (
+                      <motion.div
+                        key={blocked.id}
+                        className="p-4 bg-white rounded-2xl border border-gray-200 relative min-w-0 shadow-sm"
+                      >
+                        <div className="flex flex-col items-center text-center min-w-0 w-full">
+                          <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mb-3 flex-shrink-0">
+                            <span className="text-white font-bold text-xl">
+                              {(blockedUser?.full_name || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          {/* Ім'я з обрізанням */}
+                          <div className="w-full min-w-0 mb-1">
+                            <p className="font-bold text-gray-900 text-sm truncate" title={blockedUser?.full_name || 'Користувач'}>
+                              {blockedUser?.full_name || 'Користувач'}
+                            </p>
+                          </div>
+                          
+                          {/* Район / Стать */}
+                          <div className="w-full min-w-0 mb-3 space-y-0.5">
+                            {blockedUser?.district && (
+                              <p className="text-xs text-gray-500 truncate" title={blockedUser.district}>
+                                {blockedUser.district}
+                              </p>
+                            )}
+                            {(blockedUser?.gender === 'male' || blockedUser?.gender === 'female') && (
+                              <p className="text-xs text-amber-600">
+                                {blockedUser.gender === 'male' ? 'Чоловік' : 'Жінка'}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              setSelectedFriend({ blocked_user_id: blocked.blocked_user_id, blocked_user: blockedUser });
+                              setShowUnblockConfirm(true);
+                            }}
+                            className="mt-auto px-4 py-2 bg-green-500 text-white rounded-xl text-xs font-semibold hover:bg-green-600 transition-all w-full flex items-center justify-center gap-1"
+                          >
+                            <Check size={14} className="flex-shrink-0" />
+                            <span>Розблокувати</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            </motion.div>
+          )}
 
           {/* Side Cards */}
           <div className="lg:col-span-1 space-y-6">
@@ -562,373 +986,6 @@ export default function PublicProfile() {
             </div>
           )}
         </motion.div>
-
-        {/* Friends Section - Only for own profile */}
-        {isOwnProfile() && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mt-6 bg-white rounded-3xl p-8 shadow-sm border border-gray-200"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Users size={28} className="text-blue-600" strokeWidth={2} />
-                Друзі
-                {friends.length > 0 && (
-                  <span className="text-lg font-normal text-gray-500">
-                    ({friends.length})
-                  </span>
-                )}
-              </h2>
-            </div>
-
-            {/* Friend Requests */}
-            {friendRequests.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Bell size={20} className="text-blue-600" strokeWidth={2} />
-                  <h3 className="text-lg font-bold text-gray-900">Запити на дружбу</h3>
-                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
-                    {friendRequests.length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {friendRequests.map((request) => (
-                    <div
-                      key={request.id}
-                      className="p-4 bg-white border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold">
-                            {(request.user?.full_name || '?').charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">
-                            {request.user?.full_name || 'Користувач'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            хоче додати вас у друзі
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0 mt-1">
-                            {request.user?.district && (
-                              <span className="text-xs text-gray-500">{request.user.district}</span>
-                            )}
-                            {(request.user?.gender === 'male' || request.user?.gender === 'female') && (
-                              <span className="text-xs text-amber-600">
-                                {request.user.gender === 'male' ? 'Чоловік' : 'Жінка'}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleAcceptRequest(request.id)}
-                          className="px-4 py-2 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center gap-2"
-                        >
-                          <Check size={18} />
-                          Прийняти
-                        </button>
-                        <button
-                          onClick={() => handleRejectRequest(request.id)}
-                          className="px-4 py-2 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all flex items-center gap-2"
-                        >
-                          <XIcon size={18} />
-                          Відхилити
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Friends List */}
-            {friendsLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 size={32} className="animate-spin text-blue-600" />
-              </div>
-            ) : friends.length === 0 ? (
-              <div className="text-center py-12">
-                <Users size={48} className="text-gray-300 mx-auto mb-4" strokeWidth={1.5} />
-                <p className="text-gray-500">У вас поки немає друзів</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Додавайте друзів, клікаючи на авторів в оголошеннях
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Search and View Toggle */}
-                <div className="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
-                  <div className="relative w-full sm:w-auto sm:flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} strokeWidth={2} />
-                    <input
-                      type="text"
-                      placeholder="Пошук друзів..."
-                      value={friendsSearchTerm}
-                      onChange={(e) => setFriendsSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
-                    <button
-                      onClick={() => setFriendsViewMode('grid')}
-                      className={`p-2 rounded-lg transition-all ${
-                        friendsViewMode === 'grid'
-                          ? 'bg-white text-blue-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                      title="Сітка"
-                    >
-                      <Grid3x3 size={18} strokeWidth={2} />
-                    </button>
-                    <button
-                      onClick={() => setFriendsViewMode('list')}
-                      className={`p-2 rounded-lg transition-all ${
-                        friendsViewMode === 'list'
-                          ? 'bg-white text-blue-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700'
-                      }`}
-                      title="Список"
-                    >
-                      <List size={18} strokeWidth={2} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filtered Friends */}
-                {(() => {
-                  const filteredFriends = friends.filter((friend) => {
-                    const name = friend.friend_profile?.full_name || '';
-                    const district = friend.friend_profile?.district || '';
-                    const searchLower = friendsSearchTerm.toLowerCase();
-                    return name.toLowerCase().includes(searchLower) || district.toLowerCase().includes(searchLower);
-                  });
-
-                  if (filteredFriends.length === 0) {
-                    return (
-                      <div className="text-center py-8">
-                        <Search size={32} className="text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-500">Друзів не знайдено</p>
-                      </div>
-                    );
-                  }
-
-                  return friendsViewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                      {filteredFriends.map((friend) => (
-                        <motion.div
-                          key={friend.id}
-                          whileHover={{ scale: 1.02 }}
-                          className="p-3 bg-white rounded-xl border border-gray-200 hover:border-blue-600/30 transition-all relative min-w-0 shadow-sm"
-                        >
-                          <div 
-                            className="flex flex-col items-center text-center cursor-pointer min-w-0 w-full"
-                            onClick={() => navigate(`/profile/${friend.friend_profile.id}`)}
-                          >
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center mb-2 flex-shrink-0">
-                              <span className="text-white font-bold text-lg">
-                                {(friend.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            
-                            {/* Ім'я з обрізанням */}
-                            <div className="w-full min-w-0 mb-1">
-                              <p className="font-bold text-gray-900 text-xs truncate" title={friend.friend_profile?.full_name || 'Користувач'}>
-                                {friend.friend_profile?.full_name || 'Користувач'}
-                              </p>
-                            </div>
-                            
-                            {/* Район / Стать */}
-                            <div className="w-full min-w-0 mb-2 space-y-0.5">
-                              {friend.friend_profile?.district && (
-                                <p className="text-[10px] text-gray-500 truncate" title={friend.friend_profile.district}>
-                                  {friend.friend_profile.district}
-                                </p>
-                              )}
-                              {(friend.friend_profile?.gender === 'male' || friend.friend_profile?.gender === 'female') && (
-                                <p className="text-[10px] text-amber-600">
-                                  {friend.friend_profile.gender === 'male' ? 'Чоловік' : 'Жінка'}
-                                </p>
-                              )}
-                            </div>
-                            
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/messages/${friend.friend_profile.id}`);
-                              }}
-                              className="mt-auto px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-semibold hover:bg-blue-700 transition-all w-full"
-                            >
-                              Написати
-                            </button>
-                          </div>
-                          
-                          {/* Action Buttons */}
-                          <div className="flex gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => {
-                                setSelectedFriend(friend);
-                                setShowDeleteConfirm(true);
-                              }}
-                              className="flex-1 px-2 py-1.5 bg-red-500/10 text-red-600 rounded-lg text-[10px] font-semibold hover:bg-red-500/20 transition-all flex items-center justify-center gap-1 min-w-0"
-                              title="Видалити з друзів"
-                            >
-                              <Trash2 size={12} className="flex-shrink-0" />
-                              <span className="truncate hidden sm:inline">Видалити</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedFriend(friend);
-                                setShowBlockConfirm(true);
-                              }}
-                              className="flex-1 px-2 py-1.5 bg-orange-500/10 text-orange-600 rounded-lg text-[10px] font-semibold hover:bg-orange-500/20 transition-all flex items-center justify-center gap-1 min-w-0"
-                              title="Додати до чорного списку"
-                            >
-                              <Ban size={12} className="flex-shrink-0" />
-                              <span className="truncate hidden sm:inline">Заблокувати</span>
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredFriends.map((friend) => (
-                        <motion.div
-                          key={friend.id}
-                          whileHover={{ x: 4 }}
-                          className="p-3 bg-white rounded-xl border border-gray-200 hover:border-blue-600/30 transition-all flex items-center gap-3 cursor-pointer shadow-sm"
-                          onClick={() => navigate(`/profile/${friend.friend_profile.id}`)}
-                        >
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-lg">
-                              {(friend.friend_profile?.full_name || '?').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm truncate" title={friend.friend_profile?.full_name || 'Користувач'}>
-                              {friend.friend_profile?.full_name || 'Користувач'}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0">
-                              {friend.friend_profile?.district && (
-                                <p className="text-xs text-gray-500 truncate" title={friend.friend_profile.district}>
-                                  {friend.friend_profile.district}
-                                </p>
-                              )}
-                              {(friend.friend_profile?.gender === 'male' || friend.friend_profile?.gender === 'female') && (
-                                <span className="text-xs text-amber-600">
-                                  {friend.friend_profile.gender === 'male' ? 'Чоловік' : 'Жінка'}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/messages/${friend.friend_profile.id}`);
-                              }}
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-all"
-                            >
-                              Написати
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedFriend(friend);
-                                setShowDeleteConfirm(true);
-                              }}
-                              className="p-2 bg-red-500/10 text-red-600 rounded-lg hover:bg-red-500/20 transition-all"
-                              title="Видалити з друзів"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedFriend(friend);
-                                setShowBlockConfirm(true);
-                              }}
-                              className="p-2 bg-orange-500/10 text-orange-600 rounded-lg hover:bg-orange-500/20 transition-all"
-                              title="Заблокувати"
-                            >
-                              <Ban size={16} />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </>
-            )}
-
-            {/* Blocked Users Section */}
-            {blockedUsers.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <UserX size={20} className="text-blue-600" strokeWidth={2} />
-                  Заблоковані користувачі ({blockedUsers.length})
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {blockedUsers.map((blocked) => {
-                    const blockedUser = blocked.blocked_user || { id: blocked.blocked_user_id, full_name: 'Користувач', district: null };
-                    return (
-                      <motion.div
-                        key={blocked.id}
-                        className="p-4 bg-white rounded-2xl border border-gray-200 relative min-w-0 shadow-sm"
-                      >
-                        <div className="flex flex-col items-center text-center min-w-0 w-full">
-                          <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mb-3 flex-shrink-0">
-                            <span className="text-white font-bold text-xl">
-                              {(blockedUser?.full_name || '?').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          
-                          {/* Ім'я з обрізанням */}
-                          <div className="w-full min-w-0 mb-1">
-                            <p className="font-bold text-gray-900 text-sm truncate" title={blockedUser?.full_name || 'Користувач'}>
-                              {blockedUser?.full_name || 'Користувач'}
-                            </p>
-                          </div>
-                          
-                          {/* Район / Стать */}
-                          <div className="w-full min-w-0 mb-3 space-y-0.5">
-                            {blockedUser?.district && (
-                              <p className="text-xs text-gray-500 truncate" title={blockedUser.district}>
-                                {blockedUser.district}
-                              </p>
-                            )}
-                            {(blockedUser?.gender === 'male' || blockedUser?.gender === 'female') && (
-                              <p className="text-xs text-amber-600">
-                                {blockedUser.gender === 'male' ? 'Чоловік' : 'Жінка'}
-                              </p>
-                            )}
-                          </div>
-                          
-                          <button
-                            onClick={() => {
-                              setSelectedFriend({ blocked_user_id: blocked.blocked_user_id, blocked_user: blockedUser });
-                              setShowUnblockConfirm(true);
-                            }}
-                            className="mt-auto px-4 py-2 bg-green-500 text-white rounded-xl text-xs font-semibold hover:bg-green-600 transition-all w-full flex items-center justify-center gap-1"
-                          >
-                            <Check size={14} className="flex-shrink-0" />
-                            <span>Розблокувати</span>
-                          </button>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
 
         {/* Confirmation Modals */}
         <ConfirmModal

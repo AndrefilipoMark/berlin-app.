@@ -27,7 +27,7 @@ export default function FAB() {
       case '/housing':
         return { show: true, action: 'housing', icon: Home, color: 'from-vibrant-yellow to-amber-500' };
       case '/services':
-        return { show: true, action: 'service', icon: Sparkles, color: 'from-purple-500 to-pink-600' };
+        return { show: true, action: 'service', icon: Sparkles, color: 'from-teal-500 to-teal-600' };
       case '/forum':
         return { show: true, action: 'forum', icon: MessageCircle, color: 'from-green-500 to-emerald-600' };
       default:

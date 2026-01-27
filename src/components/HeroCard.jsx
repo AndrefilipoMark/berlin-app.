@@ -1,13 +1,23 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Briefcase, Home, MessageCircle, MessageSquare } from 'lucide-react';
+import { Sparkles, Briefcase, Building2, MessageCircle, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getUserStats } from '../lib/supabase';
+
+const navItems = [
+  { path: '/jobs', label: 'Вакансії', icon: Briefcase, color: 'azure-blue' },
+  { path: '/housing', label: 'Житло', icon: Building2, color: 'vibrant-yellow' },
+  { path: '/services', label: 'Послуги', icon: Sparkles, color: 'teal' },
+  { path: '/forum', label: 'Форум', icon: MessageCircle, color: 'green' },
+  { path: '/chat', label: 'Чат', icon: MessageSquare, color: 'azure-blue' },
+];
 
 export default function HeroCard() {
   const [userStats, setUserStats] = useState({ totalUsers: 0, onlineUsers: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Load stats
     const loadStats = async () => {
       try {
         setLoading(true);
@@ -25,121 +35,89 @@ export default function HeroCard() {
 
     loadStats();
     const interval = setInterval(loadStats, 60 * 1000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{ y: -4 }}
-      className="relative bg-white/90 backdrop-blur-lg rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden h-full"
-    >
-      {/* Premium Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white via-azure-blue/5 to-blue-50 pointer-events-none" />
-      
-      <div className="relative z-10">
-        {/* Online Indicator */}
-        <div className="flex items-center gap-3 mb-6">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [1, 0.7, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="w-4 h-4 bg-azure-blue rounded-full relative"
-          >
-            <motion.div
-              animate={{
-                scale: [1, 1.8, 1],
-                opacity: [0.6, 0, 0.6],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute inset-0 bg-azure-blue rounded-full"
-            />
-          </motion.div>
-          <span className="text-azure-blue font-semibold text-sm uppercase tracking-wide">
-            Online
-          </span>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative bg-white rounded-none md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-sm hover:shadow-xl border-0 md:border border-gray-100 transition-all duration-300 overflow-hidden h-auto flex flex-col"
+      >
+        <div className="relative z-10 flex flex-col pt-4 md:pt-0 pb-2 md:pb-0">
+          {/* Title - Top (Mobile) / Centered (Desktop) */}
+          <div className="flex flex-col items-center justify-center text-center mb-3 md:mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black mb-2 md:mb-3 leading-tight tracking-tight bg-gradient-to-r from-azure-blue via-azure-blue to-vibrant-yellow bg-clip-text text-transparent">
+              Наш дім Берлін
+            </h1>
+            
+            {/* New Ukrainian description */}
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 font-normal max-w-3xl leading-relaxed mb-2 md:mb-3 px-2">
+              Наш дім Берлін — твоя надійна опора у великому місті. Знаходь роботу або пропонуй свою, обирай перевірених лікарів та рідні сервіси, шукай затишне житло та будь завжди на зв'язку через форум і чат. Ми об'єднали все необхідне, щоб кожен українець у Берліні почувався як вдома. Разом ми — сила! 🇺🇦
+            </p>
+
+            {/* Single Stats line - Under description */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-full shadow-sm mb-2 md:mb-3">
+              <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs md:text-sm text-gray-600 font-medium">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-gentle-pulse"></span>
+                {loading ? '...' : userStats.onlineUsers.toLocaleString('uk-UA')} онлайн
+              </span>
+              <span className="w-0.5 h-0.5 bg-gray-400 rounded-full"></span>
+              <span className="text-[10px] sm:text-xs md:text-sm text-gray-600 font-medium">
+                {loading ? '...' : (100 + (userStats.totalUsers || 0)).toLocaleString('uk-UA')} учасники спільноти
+              </span>
+            </div>
+          </div>
+
+          {/* Navigation Grid - Compact on mobile, Chat spans 2 cols on mobile */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3 lg:gap-4">
+            {navItems.map((item, index) => {
+              const Icon = item.icon;
+              const isLast = index === navItems.length - 1; // Chat is last
+              const getColorClasses = (color) => {
+                const colors = {
+                  'azure-blue': 'bg-azure-blue/10 text-azure-blue border-azure-blue/20',
+                  'vibrant-yellow': 'bg-vibrant-yellow/10 text-vibrant-yellow border-vibrant-yellow/20',
+                  'purple': 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+                  'teal': 'bg-teal-500/10 text-teal-600 border-teal-500/20',
+                  'green': 'bg-green-500/10 text-green-600 border-green-500/20'
+                };
+                return colors[color] || colors['azure-blue'];
+              };
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`group ${isLast ? 'col-span-2 md:col-span-1' : ''}`}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex flex-col items-center justify-center p-2.5 md:p-3 lg:p-4 rounded-xl md:rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all ${getColorClasses(item.color)}`}
+                  >
+                    <div className={`w-9 h-9 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg md:rounded-xl flex items-center justify-center mb-1 md:mb-1.5 ${getColorClasses(item.color)}`}>
+                      <Icon size={18} className="md:w-5 md:h-5 lg:w-6 lg:h-6 animate-heartbeat group-hover:animate-breathing transition-transform" strokeWidth={2} />
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] md:text-xs lg:text-sm font-semibold text-gray-900 text-center leading-tight">
+                      {item.label}
+                    </p>
+                  </motion.div>
+                </Link>
+              );
+            })}
+          </div>
+
         </div>
 
-        {/* Title */}
-        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight bg-clip-text">
-          Наш дім Берлін
-        </h1>
-        
-        <p className="text-lg md:text-xl text-gray-700 font-semibold mb-6 max-w-2xl">
-          Ваша платформа для життя в Берліні
-        </p>
-
-        {/* Features List */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Sparkles size={16} className="text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Сервіси українською мовою</p>
-              <p className="text-xs text-gray-500">Лікарі, ресторани, салони краси та інші послуги</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Briefcase size={16} className="text-azure-blue" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Робота та житло</p>
-              <p className="text-xs text-gray-500">Знаходьте вакансії та житло в Берліні</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <MessageCircle size={16} className="text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Форум</p>
-              <p className="text-xs text-gray-500">Задавайте питання та дізнавайтеся про події</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-              <MessageSquare size={16} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Чат</p>
-              <p className="text-xs text-gray-500">Спілкуйтесь з усією українською спільнотою</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="flex gap-6 md:gap-8 mt-8">
-          <div className="bg-azure-blue/5 px-4 py-3 rounded-2xl border border-azure-blue/10">
-            <div className="text-3xl md:text-4xl font-extrabold text-azure-blue">
-              {loading ? '...' : (100 + (userStats.totalUsers || 0)).toLocaleString('uk-UA')}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Учасників</div>
-          </div>
-          <div className="bg-vibrant-yellow/5 px-4 py-3 rounded-2xl border border-vibrant-yellow/10">
-            <div className="text-3xl md:text-4xl font-extrabold text-vibrant-yellow">
-              {loading ? '...' : userStats.onlineUsers.toLocaleString('uk-UA')}
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Онлайн зараз</div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
+        {/* Ukrainian Ornament / Gradient Divider - Very subtle */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-azure-blue/30 via-vibrant-yellow/30 to-transparent"></div>
+      </motion.div>
+    </>
   );
 }

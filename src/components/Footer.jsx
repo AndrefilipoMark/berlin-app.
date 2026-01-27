@@ -7,8 +7,9 @@ export default function Footer() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const isChatPage = location.pathname.startsWith('/chat');
+  const isMessagesPage = location.pathname.startsWith('/messages');
   
-  if (isChatPage) return null;
+  if (isChatPage || isMessagesPage) return null;
 
   return (
     <motion.footer

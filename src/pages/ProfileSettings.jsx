@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Users, MapPin, FileText, Save, Loader2, CheckCircle, Camera, Calendar } from 'lucide-react';
+import { User, Users, MapPin, FileText, Save, Loader2, CheckCircle, Camera, Calendar, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,10 @@ export default function ProfileSettings() {
     district: '',
     gender: '',
     bio: '',
+    avatar_url: '',
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   useEffect(() => {
     checkUser();
@@ -74,7 +77,9 @@ export default function ProfileSettings() {
           district: data.district || '',
           gender: data.gender || '',
           bio: data.bio || '',
+          avatar_url: data.avatar_url || '',
         });
+        setAvatarPreview(data.avatar_url || null);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -110,6 +115,7 @@ export default function ProfileSettings() {
           district: formData.district || null,
           gender: formData.gender || null,
           bio: formData.bio.trim() || null,
+          avatar_url: formData.avatar_url || null,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'id'
@@ -140,7 +146,8 @@ export default function ProfileSettings() {
           full_name: data.full_name,
           district: data.district,
           gender: data.gender,
-          bio: data.bio 
+          bio: data.bio,
+          avatar_url: data.avatar_url 
         } 
       }));
 
@@ -167,6 +174,143 @@ export default function ProfileSettings() {
     });
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Перевірка типу файлу
+    if (!file.type.startsWith('image/')) {
+      toast.error('❌ Будь ласка, оберіть зображення', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
+    }
+
+    // Перевірка розміру (макс 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('❌ Розмір зображення не повинен перевищувати 5MB', {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+
+      // Створюємо preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Завантажуємо в Supabase Storage
+      // Використовуємо структуру папок: avatars/{user_id}/{filename}
+      // Це потрібно для RLS політик
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Видаляємо старе зображення, якщо воно є
+      if (formData.avatar_url) {
+        try {
+          // Витягуємо шлях з URL (формат: .../avatars/{user_id}/{filename})
+          const urlParts = formData.avatar_url.split('/avatars/');
+          if (urlParts.length > 1) {
+            const oldPath = urlParts[1];
+            await supabase.storage.from('avatars').remove([oldPath]);
+          }
+        } catch (err) {
+          console.warn('Помилка видалення старого аватара:', err);
+        }
+      }
+
+      // Завантажуємо нове зображення
+      // Використовуємо upsert: true, щоб перезаписати, якщо файл вже існує
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        // Якщо bucket не існує, створимо його автоматично через помилку
+        if (uploadError.message.includes('Bucket not found')) {
+          toast.error('❌ Потрібно створити bucket "avatars" в Supabase Storage', {
+            duration: 5000,
+            position: 'top-center',
+          });
+          throw uploadError;
+        }
+        throw uploadError;
+      }
+
+      // Отримуємо публічний URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      console.log('✅ Avatar uploaded successfully:', {
+        filePath,
+        publicUrl,
+        uploadData
+      });
+
+      // Оновлюємо formData
+      setFormData({ ...formData, avatar_url: publicUrl });
+
+      // Зберігаємо одразу в профіль, щоб не втратити при перезавантаженні
+      try {
+        const { error: saveError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', user.id);
+
+        if (saveError) {
+          console.error('Error saving avatar URL:', saveError);
+          toast.error('⚠️ Аватарку завантажено, але не вдалося зберегти URL. Натисніть "Зберегти зміни"', {
+            duration: 5000,
+            position: 'top-center',
+          });
+        } else {
+          console.log('✅ Avatar URL saved to profile');
+          // Оновлюємо подію для синхронізації
+          window.dispatchEvent(new CustomEvent('profileUpdated', { 
+            detail: { avatar_url: publicUrl } 
+          }));
+        }
+      } catch (saveErr) {
+        console.error('Exception saving avatar URL:', saveErr);
+      }
+
+      toast.success('✅ Аватарку завантажено та збережено!', {
+        duration: 3000,
+        position: 'top-center',
+        style: {
+          background: '#10b981',
+          color: '#fff',
+          fontWeight: 'bold',
+          borderRadius: '16px',
+          padding: '16px',
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('❌ Помилка завантаження: ' + error.message, {
+        duration: 4000,
+        position: 'top-center',
+      });
+      setAvatarPreview(null);
+    } finally {
+      setUploadingAvatar(false);
+      // Очищаємо input
+      e.target.value = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -186,10 +330,17 @@ export default function ProfileSettings() {
           className="mb-8"
         >
           <div className="flex items-center gap-4 mb-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-12 h-12 bg-white rounded-2xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm hover:shadow-md"
+              title="Повернутися назад"
+            >
+              <ArrowLeft size={20} className="text-gray-700" strokeWidth={2.5} />
+            </button>
             <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center border border-gray-200">
               <User size={32} className="text-blue-600" strokeWidth={2.5} />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-extrabold text-gray-900">
                 Налаштування профілю
               </h1>
@@ -211,18 +362,50 @@ export default function ProfileSettings() {
           >
             <div className="flex flex-col items-center text-center">
               <div className="relative mb-6">
-                <div className="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-6xl md:text-7xl">
-                    {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'У'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="absolute bottom-0 right-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 hover:scale-110 transition-all"
-                  title="Змінити фото (скоро)"
+                {(avatarPreview || formData.avatar_url) ? (
+                  <div className="w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    <img 
+                      src={avatarPreview || formData.avatar_url} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Error loading avatar image:', e);
+                        // Якщо зображення не завантажилось, показуємо placeholder
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `
+                          <div class="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                            <span class="text-white font-bold text-6xl md:text-7xl">
+                              ${formData.full_name ? formData.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'У'}
+                            </span>
+                          </div>
+                        `;
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-6xl md:text-7xl">
+                      {formData.full_name ? formData.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'У'}
+                    </span>
+                  </div>
+                )}
+                <label
+                  className="absolute bottom-0 right-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 hover:scale-110 transition-all cursor-pointer"
+                  title="Змінити фото"
                 >
-                  <Camera size={20} strokeWidth={2} />
-                </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                    className="hidden"
+                  />
+                  {uploadingAvatar ? (
+                    <Loader2 size={20} className="animate-spin" strokeWidth={2} />
+                  ) : (
+                    <Camera size={20} strokeWidth={2} />
+                  )}
+                </label>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">
                 {formData.full_name || 'Ваше ім\'я'}

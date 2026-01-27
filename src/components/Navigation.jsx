@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Briefcase, Building2, MessageCircle, MessageSquare, Sparkles, LogIn, LogOut, User, Shield, Bell } from 'lucide-react';
+import { Home, Briefcase, Building2, MessageCircle, MessageSquare, Sparkles, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase, updateLastSeen, getFriendRequests, getUnreadMessagesCount } from '../lib/supabase';
@@ -14,12 +14,12 @@ const ADMIN_EMAILS = [
 ];
 
 const navItems = [
-  { path: '/', label: 'Головна', icon: Home },
-  { path: '/jobs', label: 'Вакансії', icon: Briefcase },
-  { path: '/housing', label: 'Житло', icon: Building2 },
-  { path: '/services', label: 'Послуги', icon: Sparkles },
-  { path: '/forum', label: 'Форум', icon: MessageCircle },
-  { path: '/chat', label: 'Чат', icon: MessageSquare },
+  { path: '/', label: 'Головна', icon: Home, color: 'azure-blue' },
+  { path: '/jobs', label: 'Вакансії', icon: Briefcase, color: 'azure-blue' },
+  { path: '/housing', label: 'Житло', icon: Building2, color: 'vibrant-yellow' },
+  { path: '/services', label: 'Послуги', icon: Sparkles, color: 'teal' },
+  { path: '/forum', label: 'Форум', icon: MessageCircle, color: 'green' },
+  { path: '/chat', label: 'Чат', icon: MessageSquare, color: 'azure-blue' },
 ];
 
 export default function Navigation() {
@@ -256,88 +256,118 @@ export default function Navigation() {
   // Перевіряємо адміна через is_admin з profiles або через email
   const isAdmin = profile?.is_admin || (user && ADMIN_EMAILS.includes(user.email));
 
+  // Color mapping for active tab indicator and icon color
+  const getActiveColor = (color, type = 'bg') => {
+    const colorMap = {
+      'azure-blue': {
+        bg: 'bg-azure-blue',
+        text: 'text-azure-blue'
+      },
+      'vibrant-yellow': {
+        bg: 'bg-vibrant-yellow',
+        text: 'text-vibrant-yellow'
+      },
+      'purple': {
+        bg: 'bg-purple-500',
+        text: 'text-purple-500'
+      },
+      'teal': {
+        bg: 'bg-teal-600',
+        text: 'text-teal-600'
+      },
+      'green': {
+        bg: 'bg-green-500',
+        text: 'text-green-500'
+      }
+    };
+    const colors = colorMap[color] || colorMap['azure-blue'];
+    return colors[type];
+  };
+
   return (
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+      className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100/50 shadow-sm"
     >
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
-            <div className="w-10 h-10 bg-gradient-to-br from-azure-blue to-vibrant-yellow rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <span className="text-white font-bold text-xl">Н</span>
-            </div>
-            <div className="hidden md:block">
-              <h1 className="text-lg font-extrabold text-gray-900 leading-none">
-                Наш дім Берлін
-              </h1>
-              <p className="text-xs text-gray-500">Українська спільнота</p>
-            </div>
-          </Link>
-
-          {/* Navigation Links */}
-          <div className="flex items-center gap-1 md:gap-2 flex-1 justify-center max-w-4xl mx-4 md:mx-8">
+      <div className="max-w-[1600px] mx-auto px-3 md:px-6">
+        <div className="h-14 md:h-16 flex items-center justify-between gap-2 md:gap-4">
+          {/* Navigation Links - Centered with horizontal scroll on mobile */}
+          <div className="flex items-center gap-1.5 md:gap-3 lg:gap-4 flex-1 justify-center overflow-x-auto scrollbar-hide px-2">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              // Improved active state detection for sub-routes
+              const isActive = item.path === '/' 
+                ? location.pathname === '/'
+                : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+              const activeBgColor = getActiveColor(item.color, 'bg');
+              const activeTextColor = getActiveColor(item.color, 'text');
               
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className="relative"
+                  className="relative flex-shrink-0"
                 >
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
-                      isActive
-                        ? 'bg-azure-blue text-white shadow-lg'
-                        : 'text-gray-600 hover:bg-gray-100'
+                    className={`flex flex-col items-center justify-center px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all ${
+                      isActive 
+                        ? (item.color === 'teal' ? 'bg-teal-50' : `${activeBgColor}/10`)
+                        : 'hover:bg-gray-50'
                     }`}
                   >
-                    <Icon size={18} strokeWidth={2.5} />
-                    <span className="hidden lg:inline text-sm font-semibold">
+                    <Icon 
+                      size={18} 
+                      className={`md:w-5 md:h-5 transition-colors ${
+                        isActive 
+                          ? activeTextColor
+                          : 'text-gray-500'
+                      }`}
+                      strokeWidth={isActive ? 2.5 : 2}
+                    />
+                    <span className={`text-[10px] md:text-xs leading-none mt-0.5 md:mt-1 transition-colors font-medium whitespace-nowrap ${
+                      isActive 
+                        ? 'text-gray-900' 
+                        : 'text-gray-500'
+                    }`}>
                       {item.label}
                     </span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeNavIndicator"
+                        className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-6 md:w-8 h-0.5 ${activeBgColor} rounded-full`}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </motion.div>
-                  
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute -bottom-2 left-0 right-0 h-1 bg-azure-blue rounded-full"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
                 </Link>
               );
             })}
           </div>
 
-          {/* Login Button / User Avatar */}
-          <div className="relative">
+          {/* Login Button / User Avatar - Right side */}
+          <div className="flex-shrink-0 relative">
             {user ? (
               <>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-3 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-all"
+                  className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 rounded-lg md:rounded-xl cursor-pointer transition-all"
                 >
-                  <div className="w-9 h-9 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center shadow-md">
-                    <span className="text-white font-bold text-sm">
+                  <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center shadow-md">
+                    <span className="text-white font-bold text-xs md:text-sm">
                       {getUserInitial()}
                     </span>
                   </div>
-                  <span className="hidden md:block text-sm font-bold text-gray-900">
+                  <span className="hidden lg:block text-sm font-bold text-gray-900">
                     {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
                   </span>
                 </motion.div>
 
-                {/* User Dropdown Menu */}
+                {/* User Dropdown Menu - Premium Ukrainian Design */}
                 <AnimatePresence>
                   {showUserMenu && (
                     <motion.div
@@ -350,72 +380,120 @@ export default function Navigation() {
                         stiffness: 300,
                         duration: 0.2
                       }}
-                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+                      className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100/50 overflow-hidden z-50 backdrop-blur-sm"
                     >
-                      <div className="p-3 border-b border-gray-100">
-                        <p className="text-sm font-bold text-gray-900 truncate">
-                          {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {user.email}
-                        </p>
+                      {/* Ukrainian Flag Gradient Header */}
+                      <div className="relative bg-gradient-to-r from-azure-blue via-azure-blue to-vibrant-yellow p-3 pb-4">
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-azure-blue via-vibrant-yellow to-azure-blue"></div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-white/30 shadow-md">
+                            <span className="text-white font-bold text-base">
+                              {getUserInitial()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-extrabold text-white truncate drop-shadow-sm">
+                              {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
+                            </p>
+                            <p className="text-[10px] text-white/90 truncate mt-0.5">
+                              {user.email}
+                            </p>
+                            {isAdmin && (
+                              <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-[9px] font-bold rounded-full border border-white/30">
+                                <Shield size={8} />
+                                АДМІН
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="p-1.5">
+                        <Link
+                          to={`/profile/${user.id}`}
+                          onClick={() => setShowUserMenu(false)}
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 relative"
+                        >
+                          <div className="w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
+                            <User size={16} className="text-azure-blue" strokeWidth={2} />
+                          </div>
+                          <span className="flex-1">Моя сторінка</span>
+                          {friendRequestsCount > 0 && (
+                            <span className="px-1.5 py-0.5 bg-vibrant-yellow text-gray-900 text-[10px] font-bold rounded-full shadow-sm">
+                              {friendRequestsCount}
+                            </span>
+                          )}
+                        </Link>
+                        
+                        <Link
+                          to="/messages"
+                          onClick={() => setShowUserMenu(false)}
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 relative mt-0.5"
+                        >
+                          <div className="relative w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
+                            <MessageSquare size={16} className="text-azure-blue" strokeWidth={2} />
+                            {unreadMessagesCount > 0 && (
+                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+                                <span className="text-white text-[8px] font-bold">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex-1">Повідомлення</span>
+                        </Link>
+                        
+                        <Link
+                          to="/profile"
+                          onClick={() => setShowUserMenu(false)}
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                        >
+                          <div className="w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
+                            <Settings size={16} className="text-azure-blue" strokeWidth={2} />
+                          </div>
+                          <span className="flex-1">Налаштування</span>
+                        </Link>
+                        
                         {isAdmin && (
-                          <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-bold rounded">
-                            АДМІН
-                          </span>
+                          <Link
+                            to="/admin"
+                            onClick={() => setShowUserMenu(false)}
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-vibrant-yellow hover:bg-vibrant-yellow/10 rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                          >
+                            <div className="w-8 h-8 bg-vibrant-yellow/20 rounded-lg flex items-center justify-center group-hover:bg-vibrant-yellow/30 transition-colors">
+                              <Shield size={16} className="text-vibrant-yellow" strokeWidth={2} />
+                            </div>
+                            <span className="flex-1">Адмін-панель</span>
+                          </Link>
                         )}
                       </div>
-                      <Link
-                        to={`/profile/${user.id}`}
-                        onClick={() => setShowUserMenu(false)}
-                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 relative"
-                      >
-                        <User size={16} />
-                        Моя сторінка
-                        {friendRequestsCount > 0 && (
-                          <span className="ml-auto px-2 py-0.5 bg-yellow-500 text-white text-xs font-bold rounded-full">
-                            {friendRequestsCount}
-                          </span>
-                        )}
-                      </Link>
-                      <Link
-                        to="/messages"
-                        onClick={() => setShowUserMenu(false)}
-                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 relative"
-                      >
-                        <div className="relative">
-                          <MessageSquare size={16} />
-                          {unreadMessagesCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
-                          )}
-                        </div>
-                        Повідомлення
-                      </Link>
-                      <Link
-                        to="/profile"
-                        onClick={() => setShowUserMenu(false)}
-                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-                      >
-                        <User size={16} />
-                        Налаштування
-                      </Link>
-                      {isAdmin && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setShowUserMenu(false)}
-                          className="w-full px-4 py-3 text-left text-sm font-semibold text-yellow-700 hover:bg-yellow-50 transition-colors flex items-center gap-2"
+
+                      {/* Divider */}
+                      <div className="px-3 py-1.5">
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                      </div>
+
+                      {/* Logout Button - Ukrainian Style */}
+                      <div className="p-1.5 pb-2.5">
+                        <button
+                          onClick={handleLogout}
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center gap-2.5"
                         >
-                          <Shield size={16} />
-                          Адмін-панель
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-                      >
-                        <LogOut size={16} />
-                        Вийти
-                      </button>
+                          <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                            <LogOut size={16} className="text-red-600" strokeWidth={2} />
+                          </div>
+                          <span className="flex-1">Вийти</span>
+                          <span className="text-red-400 group-hover:text-red-600 transition-colors">→</span>
+                        </button>
+                      </div>
+
+                      {/* Ukrainian Flag Footer */}
+                      <div className="px-3 py-1.5 bg-gradient-to-r from-azure-blue/5 via-vibrant-yellow/5 to-azure-blue/5 border-t border-gray-100">
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
+                          <Heart size={10} className="text-red-500 fill-red-500" />
+                          <span>Наш дім Берлін</span>
+                          <span className="text-azure-blue">🇺🇦</span>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -433,10 +511,10 @@ export default function Navigation() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-azure-blue text-white rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-azure-blue text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm shadow-lg hover:shadow-xl transition-all"
               >
-                <LogIn size={18} strokeWidth={2.5} />
-                <span className="hidden md:inline">Увійти</span>
+                <LogIn size={16} className="md:w-5 md:h-5" strokeWidth={2.5} />
+                <span className="hidden sm:inline">Увійти</span>
               </motion.button>
             )}
           </div>
