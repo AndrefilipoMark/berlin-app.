@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background: Ukraine flag style -->
+  <rect width="1200" height="630" fill="#0057B7"/>
+  <rect y="315" width="1200" height="315" fill="#FFD700"/>
+  <!-- Soft gradient overlay -->
+  <defs>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="rgba(0,0,0,0.05)"/>
+      <stop offset="1" stop-color="rgba(0,0,0,0)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#shade)"/>
+  <!-- Title: DIM BERLIN -->
+  <text x="600" y="280" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="#FFD700" text-anchor="middle" letter-spacing="0.08em">DIM</text>
+  <text x="600" y="380" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="#003366" text-anchor="middle" letter-spacing="0.08em">BERLIN</text>
+  <!-- Subtitle -->
+  <text x="600" y="460" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="28" font-weight="500" fill="#1a1a2e" text-anchor="middle" opacity="0.9">;0BD>@<0 4;O C:@0W=FV2 C V<5GG8=V</text>
+  <!-- Decorative line -->
+  <line x1="350" y1="320" x2="850" y2="320" stroke="#003366" stroke-width="3" opacity="0.4"/>
+</svg>
