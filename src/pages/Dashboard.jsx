@@ -8,7 +8,7 @@ import ServicesCard from '../components/ServicesCard';
 
 export default function Dashboard() {
   return (
-    <div className="pt-0 md:pt-12 pb-4 md:pb-8 px-0 md:px-4 lg:px-8 min-h-screen md:min-h-0">
+    <div className="pt-0 md:pt-12 pb-4 md:pb-8 px-0 md:px-4 lg:px-8 min-h-screen md:min-h-0 bg-gray-50">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

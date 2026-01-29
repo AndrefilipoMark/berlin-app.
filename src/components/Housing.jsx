@@ -93,7 +93,7 @@ export default function Housing() {
                   onClick={() => navigate(`/housing/${listing.id}`)}
                   className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-amber-400 transition-all cursor-pointer group"
                 >
-                  <div className="flex justify-between items-start gap-2 mb-2">
+                  <div className="flex justify-between items-start gap-2 mb-1.5">
                     <h3 className="font-bold text-sm text-gray-900 group-hover:text-amber-600 transition-colors flex-1 line-clamp-1">
                       {listing.title}
                     </h3>
@@ -105,10 +105,12 @@ export default function Housing() {
                   </div>
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <div className="flex items-center gap-2 text-gray-500 flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <MapPin size={11} className="text-amber-500 flex-shrink-0" />
-                        {listing.district || listing.address?.split(',')[0] || listing.address || '—'}
-                      </span>
+                      {listing.address && (
+                        <span className="flex items-center gap-1">
+                          <MapPin size={11} className="text-amber-500 flex-shrink-0" />
+                          {listing.address.split(',')[0] || listing.address}
+                        </span>
+                      )}
                       {listing.size != null && (
                         <span className="flex items-center gap-1">
                           <HomeIcon size={11} className="text-amber-500 flex-shrink-0" />
@@ -128,9 +130,17 @@ export default function Housing() {
                     </div>
                   </div>
                   {listing.description && (
-                    <p className="text-xs text-gray-500 line-clamp-2">
+                    <p className="text-[13px] text-gray-600 leading-snug line-clamp-3">
                       {listing.description}
                     </p>
+                  )}
+                  {listing.district && (
+                    <div className="flex justify-end mt-1">
+                      <span className="flex items-center gap-1 text-gray-700 text-[10px] font-semibold">
+                        <MapPin size={10} className="text-amber-500 flex-shrink-0" />
+                        {listing.district}
+                      </span>
+                    </div>
                   )}
                 </motion.div>
             ))

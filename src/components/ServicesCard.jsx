@@ -114,7 +114,7 @@ export default function ServicesCard() {
                 onClick={() => navigate(`/services/${service.id}`)}
                 className="p-4 rounded-2xl bg-white border-2 border-gray-300 hover:border-teal-400 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-[1.01] overflow-hidden"
               >
-                <div className="flex justify-between items-start gap-3 mb-2">
+                <div className="flex justify-between items-start gap-3 mb-1.5">
                   <h3 className="text-sm font-extrabold text-gray-900 max-w-[70%] line-clamp-2 group-hover:text-teal-600 transition-colors">
                     {service.name}
                   </h3>
@@ -122,31 +122,41 @@ export default function ServicesCard() {
                     {getCategoryLabel(service.category)}
                   </span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {service.address && (
-                    <div className="flex items-center gap-1.5 text-gray-600 text-xs">
+                    <div className="flex items-center gap-1.5 text-gray-600 text-xs mb-0.5">
                       <MapPin size={12} className="text-gray-400 flex-shrink-0" />
-                      <span className="line-clamp-1">{service.address.split(',')[0] || 'Berlin'}</span>
+                      <span className="line-clamp-1">{service.address.split(',')[0] || service.address}</span>
                     </div>
                   )}
                   {service.description && (
-                    <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 pt-0.5">
+                    <p className="text-gray-600 text-[13px] leading-snug line-clamp-3 relative">
                       {service.description}
                     </p>
                   )}
                 </div>
-                {Array.isArray(service.languages) && service.languages.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {[...new Set(service.languages.slice(0, 4).map(normalizeLanguageCode))].map((code) => (
-                      <span
-                        key={code}
-                        className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded"
-                      >
-                        {code}
+                <div className="flex items-center justify-between mt-3">
+                  {Array.isArray(service.languages) && service.languages.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[...new Set(service.languages.slice(0, 4).map(normalizeLanguageCode))].map((code) => (
+                        <span
+                          key={code}
+                          className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded"
+                        >
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {service.district && (
+                    <div className="flex justify-end ml-auto">
+                      <span className="flex items-center gap-1 text-gray-700 text-[10px] font-semibold">
+                        <MapPin size={10} className="text-teal-500 flex-shrink-0" />
+                        {service.district}
                       </span>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </motion.article>
             ))
           )}

@@ -128,7 +128,7 @@ export default function Jobs() {
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-blue-400 transition-all cursor-pointer group"
               >
-                <div className="flex justify-between items-start gap-2 mb-2">
+                <div className="flex justify-between items-start gap-2 mb-1.5">
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-azure-blue transition-colors flex-1 line-clamp-1">
                     {job.title}
                   </h3>
@@ -139,7 +139,7 @@ export default function Jobs() {
                   )}
                 </div>
                 {job.company && (
-                  <p className="text-xs text-gray-500 line-clamp-1 mb-1.5">{job.company}</p>
+                  <p className="text-xs text-gray-500 line-clamp-1 mb-1">{job.company}</p>
                 )}
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <div className="flex items-center gap-2 text-gray-500 flex-wrap">
@@ -160,7 +160,7 @@ export default function Jobs() {
                   </div>
                 </div>
                 {job.description && (
-                  <p className="text-xs text-gray-500 line-clamp-2">
+                  <p className="text-[13px] text-gray-600 leading-snug line-clamp-3">
                     {job.description}
                   </p>
                 )}

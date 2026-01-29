@@ -47,22 +47,25 @@ export default function HeroCard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-white rounded-none md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-sm hover:shadow-xl border-0 md:border border-gray-100 transition-all duration-300 overflow-hidden h-auto flex flex-col"
+        className="relative bg-white rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-gray-100 transition-all duration-300 overflow-hidden h-auto flex flex-col"
       >
-        <div className="relative z-10 flex flex-col pt-4 md:pt-0 pb-2 md:pb-0">
-          {/* Title - Top (Mobile) / Centered (Desktop) */}
-          <div className="flex flex-col items-center justify-center text-center mb-3 md:mb-4">
-            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black mb-2 md:mb-3 leading-tight tracking-tight bg-gradient-to-r from-azure-blue via-azure-blue to-vibrant-yellow bg-clip-text text-transparent">
+        {/* Ukrainian accent stripe at the top */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-azure-blue via-vibrant-yellow to-azure-blue"></div>
+
+        <div className="relative z-10 flex flex-col">
+          {/* Title and Description - Centered */}
+          <div className="flex flex-col items-center justify-center text-center mb-4 md:mb-5">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black mb-3 md:mb-4 leading-tight tracking-tight bg-gradient-to-r from-azure-blue via-azure-blue to-vibrant-yellow bg-clip-text text-transparent">
               Наш дім Берлін
             </h1>
             
-            {/* New Ukrainian description */}
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 font-normal max-w-3xl leading-relaxed mb-2 md:mb-3 px-2">
+            {/* Description */}
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 font-normal max-w-3xl leading-relaxed mb-3 md:mb-4 px-2">
               Наш дім Берлін — твоя надійна опора у великому місті. Знаходь роботу або пропонуй свою, обирай перевірених лікарів та рідні сервіси, шукай затишне житло та будь завжди на зв'язку через форум і чат. Ми об'єднали все необхідне, щоб кожен українець у Берліні почувався як вдома. Разом ми — сила! 🇺🇦
             </p>
 
-            {/* Single Stats line - Under description */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-full shadow-sm mb-2 md:mb-3">
+            {/* Stats line - Under description */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-50 border border-gray-200 rounded-full mb-3 md:mb-4">
               <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs md:text-sm text-gray-600 font-medium">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-gentle-pulse"></span>
                 {loading ? '...' : userStats.onlineUsers.toLocaleString('uk-UA')} онлайн
@@ -74,7 +77,7 @@ export default function HeroCard() {
             </div>
           </div>
 
-          {/* Navigation Grid - Compact on mobile, Chat spans 2 cols on mobile */}
+          {/* Navigation Grid - Unified with main card */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3 lg:gap-4">
             {navItems.map((item, index) => {
               const Icon = item.icon;
@@ -99,7 +102,7 @@ export default function HeroCard() {
                   <motion.div
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`flex flex-col items-center justify-center p-2.5 md:p-3 lg:p-4 rounded-xl md:rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all ${getColorClasses(item.color)}`}
+                    className={`flex flex-col items-center justify-center p-2.5 md:p-3 lg:p-4 rounded-xl md:rounded-2xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all ${getColorClasses(item.color)}`}
                   >
                     <div className={`w-9 h-9 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg md:rounded-xl flex items-center justify-center mb-1 md:mb-1.5 ${getColorClasses(item.color)}`}>
                       <Icon size={18} className="md:w-5 md:h-5 lg:w-6 lg:h-6 animate-heartbeat group-hover:animate-breathing transition-transform" strokeWidth={2} />
@@ -114,9 +117,6 @@ export default function HeroCard() {
           </div>
 
         </div>
-
-        {/* Ukrainian Ornament / Gradient Divider - Very subtle */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-azure-blue/30 via-vibrant-yellow/30 to-transparent"></div>
       </motion.div>
     </>
   );

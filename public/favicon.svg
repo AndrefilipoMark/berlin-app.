@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background: flat split — royal blue top, sunny yellow bottom (rx 25% = iPhone-style) -->
+  <rect width="64" height="64" rx="25%" ry="25%" fill="#0057B7"/>
+  <path d="M0 32v16q0 16 16 16h32q16 0 16-16V32H0z" fill="#FFD700"/>
+
+  <!-- DIM: yellow on blue, centered in upper half -->
+  <text x="32" y="22" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#FFD700" text-anchor="middle" letter-spacing="0.12em">DIM</text>
+  <!-- BERLIN: dark blue on yellow, centered in lower half -->
+  <text x="32" y="52" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#003366" text-anchor="middle" letter-spacing="0.12em">BERLIN</text>
+</svg>

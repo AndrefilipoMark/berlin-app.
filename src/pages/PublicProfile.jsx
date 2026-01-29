@@ -23,6 +23,8 @@ import {
   Search,
   Grid3x3,
   List,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -58,6 +60,7 @@ export default function PublicProfile() {
   const [actionLoading, setActionLoading] = useState(false);
   const [friendsSearchTerm, setFriendsSearchTerm] = useState('');
   const [friendsViewMode, setFriendsViewMode] = useState('grid'); // 'grid' or 'list'
+  const [friendsSectionOpen, setFriendsSectionOpen] = useState(false);
 
   const loadActivity = useCallback(async (userId) => {
     if (!userId) return;
@@ -486,26 +489,43 @@ export default function PublicProfile() {
             )}
           </motion.div>
 
-          {/* Friends Section - Only for own profile - Moved above side cards */}
+          {/* Friends Section - Only for own profile, collapsible tab */}
           {isOwnProfile() && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-200"
+              className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden"
             >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Users size={28} className="text-blue-600" strokeWidth={2} />
-                Друзі
+            <button
+              type="button"
+              onClick={() => setFriendsSectionOpen((v) => !v)}
+              className="w-full flex items-center justify-between gap-3 p-5 text-left hover:bg-gray-50/80 transition-colors"
+              aria-expanded={friendsSectionOpen}
+            >
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Users size={24} className="text-blue-600" strokeWidth={2} />
+                Мої друзі
                 {friends.length > 0 && (
-                  <span className="text-lg font-normal text-gray-500">
+                  <span className="text-base font-normal text-gray-500">
                     ({friends.length})
                   </span>
                 )}
+                {friendRequests.length > 0 && (
+                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">
+                    {friendRequests.length} запит{friendRequests.length === 1 ? '' : friendRequests.length < 5 ? 'и' : 'ів'}
+                  </span>
+                )}
               </h2>
-            </div>
+              {friendsSectionOpen ? (
+                <ChevronUp size={24} className="text-gray-500 flex-shrink-0" />
+              ) : (
+                <ChevronDown size={24} className="text-gray-500 flex-shrink-0" />
+              )}
+            </button>
 
+            {friendsSectionOpen && (
+            <div className="px-5 pb-6 pt-4 border-t border-gray-100">
             {/* Friend Requests */}
             {friendRequests.length > 0 && (
               <div className="mb-6">
@@ -879,6 +899,8 @@ export default function PublicProfile() {
                   })}
                 </div>
               </div>
+            )}
+            </div>
             )}
             </motion.div>
           )}
