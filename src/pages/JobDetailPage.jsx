@@ -228,10 +228,12 @@ export default function JobDetailPage() {
                 <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 break-words">
                   {job.title}
                 </h1>
-                <div className="flex items-center gap-3 text-gray-600">
-                  <Building2 size={18} className="text-azure-blue" />
-                  <span className="font-semibold">{job.company}</span>
-                </div>
+                {job.company && (
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Building2 size={18} className="text-azure-blue" />
+                    <span className="font-semibold">{job.company}</span>
+                  </div>
+                )}
                 {job.category && (
                   <div className="flex items-center gap-2 mt-3">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-azure-blue/10 text-azure-blue rounded-lg text-sm font-bold">
@@ -476,7 +478,6 @@ export default function JobDetailPage() {
 function EditJobModal({ job, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: job?.title || '',
-    company: job?.company || '',
     category: job?.category || 'IT',
     description: job?.description || '',
     salary_min: job?.salary_min?.toString() || '',
@@ -497,7 +498,7 @@ function EditJobModal({ job, onClose, onSuccess }) {
   }, []);
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.company || !formData.location || !formData.description) {
+    if (!formData.title || !formData.location || !formData.description) {
       alert('Будь ласка, заповніть усі обов\'язкові поля (*)');
       return;
     }
@@ -509,7 +510,7 @@ function EditJobModal({ job, onClose, onSuccess }) {
       setSubmitting(true);
       const jobData = {
         title: formData.title.trim(),
-        company: formData.company.trim(),
+        company: '',
         category: formData.category || null,
         description: formData.description.trim(),
         salary_min: formData.salary_min ? parseInt(formData.salary_min, 10) : null,
@@ -572,16 +573,6 @@ function EditJobModal({ job, onClose, onSuccess }) {
                 placeholder="Frontend Developer"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Компанія *</label>
-              <input
-                type="text"
-                placeholder="Tech Berlin GmbH"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue transition-all"
               />
             </div>

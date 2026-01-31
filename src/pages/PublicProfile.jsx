@@ -25,8 +25,10 @@ import {
   List,
   ChevronDown,
   ChevronUp,
+  X,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase, ensureProfile, getActivityByUser, getFriends, getFriendRequests, acceptFriendRequest, rejectFriendRequest, removeFriend, blockUser, unblockUser, getBlockedUsers, isUserBlocked } from '../lib/supabase';
 import { onEvent, Events } from '../lib/events';
@@ -61,6 +63,7 @@ export default function PublicProfile() {
   const [friendsSearchTerm, setFriendsSearchTerm] = useState('');
   const [friendsViewMode, setFriendsViewMode] = useState('grid'); // 'grid' or 'list'
   const [friendsSectionOpen, setFriendsSectionOpen] = useState(false);
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
 
   const loadActivity = useCallback(async (userId) => {
     if (!userId) return;
@@ -110,6 +113,17 @@ export default function PublicProfile() {
       window.removeEventListener('friendRequestAccepted', handleFriendRequestAccepted);
     };
   }, [currentUser?.id, profile?.id]);
+
+  useEffect(() => {
+    if (!avatarLightboxOpen) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setAvatarLightboxOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [avatarLightboxOpen]);
 
   useEffect(() => {
     const refetch = () => profile?.id && loadActivity(profile.id);
@@ -396,13 +410,17 @@ export default function PublicProfile() {
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 {profile.avatar_url ? (
-                  <div className="w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => setAvatarLightboxOpen(true)}
+                    className="w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-zoom-in block"
+                    aria-label="Відкрити аватар повністю"
+                  >
                     <img 
                       src={profile.avatar_url} 
                       alt={profile.full_name || 'Avatar'} 
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        // Якщо зображення не завантажилось, показуємо placeholder
                         e.target.style.display = 'none';
                         const placeholder = document.createElement('div');
                         placeholder.className = 'w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg';
@@ -410,7 +428,7 @@ export default function PublicProfile() {
                         e.target.parentElement.replaceWith(placeholder);
                       }}
                     />
-                  </div>
+                  </button>
                 ) : (
                   <div className="w-36 h-36 md:w-40 md:h-40 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
                     <span className="text-white font-bold text-6xl md:text-7xl">
@@ -1081,6 +1099,37 @@ export default function PublicProfile() {
           confirmColor="green"
           loading={actionLoading}
         />
+
+        {avatarLightboxOpen && profile?.avatar_url && createPortal(
+          <div
+            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+            onClick={() => setAvatarLightboxOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Аватар повністю"
+          >
+            <button
+              type="button"
+              onClick={() => setAvatarLightboxOpen(false)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-20"
+              aria-label="Закрити"
+            >
+              <X size={24} />
+            </button>
+            <div
+              className="max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name || 'Аватар'}
+                className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg"
+                draggable={false}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </div>
   );

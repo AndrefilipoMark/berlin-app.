@@ -1,9 +1,10 @@
-import { motion } from 'framer-motion';
-import { X, Briefcase, Home, Stethoscope, MessageCircle, Building2, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { supabase, createJob, createHousing, createService, createForumPost } from '../lib/supabase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Briefcase, Home, Stethoscope, MessageCircle, Building2, Sparkles, ImagePlus, Trash2, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { supabase, createJob, createHousing, updateHousing, uploadHousingPhoto, createService, createForumPost } from '../lib/supabase';
 import { emitEvent, Events } from '../lib/events';
-import { BERLIN_DISTRICTS } from '../lib/constants';
+import { BERLIN_DISTRICTS, HOUSING_PHOTOS, MEDICINE_PROFESSIONS, GASTRONOMY_SUBCATEGORIES, BEAUTY_SUBCATEGORIES } from '../lib/constants';
+import { compressHousingImage } from '../lib/compressImage';
 
 function formatSupabaseError(err) {
   if (!err) return 'Невідома помилка';
@@ -15,7 +16,6 @@ function formatSupabaseError(err) {
 export function JobFormModal({ onClose }) {
   const [formData, setFormData] = useState({
     title: '',
-    company: '',
     category: 'IT',
     description: '',
     salary_min: '',
@@ -44,7 +44,7 @@ export function JobFormModal({ onClose }) {
   }, []);
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.company || !formData.location || !formData.description) {
+    if (!formData.title || !formData.location || !formData.description) {
       alert('Будь ласка, заповніть усі обов’язкові поля (*)');
       return;
     }
@@ -58,7 +58,7 @@ export function JobFormModal({ onClose }) {
 
       const jobData = {
         title: formData.title.trim(),
-        company: formData.company.trim(),
+        company: '',
         category: formData.category || null,
         description: formData.description.trim(),
         salary_min: formData.salary_min ? parseInt(formData.salary_min, 10) : null,
@@ -101,13 +101,6 @@ export function JobFormModal({ onClose }) {
           placeholder="Frontend Developer"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        />
-        
-        <Input
-          label="Компанія *"
-          placeholder="Tech Berlin GmbH"
-          value={formData.company}
-          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
         />
 
         <Select
@@ -240,8 +233,12 @@ export function HousingFormModal({ onClose }) {
     website: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [photoUploadStatus, setPhotoUploadStatus] = useState(null);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -252,6 +249,34 @@ export function HousingFormModal({ onClose }) {
       }
     });
   }, []);
+
+  const addImages = (files) => {
+    const list = Array.from(files || []);
+    const valid = list.filter((f) => f.type.startsWith('image/') && f.size <= HOUSING_PHOTOS.maxSizeBytes);
+    const invalidSize = list.filter((f) => f.type.startsWith('image/') && f.size > HOUSING_PHOTOS.maxSizeBytes);
+    if (invalidSize.length) {
+      alert(`Деякі фото більші за 10 MB — вони пропущені. Макс. ${HOUSING_PHOTOS.maxCount} фото.`);
+    }
+    const toAdd = valid.slice(0, Math.max(0, HOUSING_PHOTOS.maxCount - imageFiles.length));
+    if (toAdd.length === 0 && valid.length > 0) {
+      alert(`Максимум ${HOUSING_PHOTOS.maxCount} фото на оголошення.`);
+      return;
+    }
+    const newFiles = [...imageFiles, ...toAdd];
+    setImageFiles(newFiles);
+    Promise.all(
+      toAdd.map((f) => new Promise((res) => {
+        const r = new FileReader();
+        r.onloadend = () => res(r.result);
+        r.readAsDataURL(f);
+      }))
+    ).then((previews) => setImagePreviews((p) => [...p, ...previews]));
+  };
+
+  const removeImage = (i) => {
+    setImageFiles((f) => f.filter((_, j) => j !== i));
+    setImagePreviews((p) => p.filter((_, j) => j !== i));
+  };
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.price || !formData.address || !formData.description || !formData.contact_phone) {
@@ -276,9 +301,22 @@ export function HousingFormModal({ onClose }) {
         contact_phone: formData.contact_phone?.trim() || null,
         website: formData.website?.trim() || null,
         user_id: user?.id || null,
+        images: [],
       };
       console.log('[Housing] Відправка в Supabase...', { title: housingData.title, user_id: housingData.user_id });
-      await createHousing(housingData);
+      const created = await createHousing(housingData);
+      if (user?.id && imageFiles.length > 0) {
+        const imageUrls = [];
+        const n = imageFiles.length;
+        for (let i = 0; i < n; i++) {
+          setPhotoUploadStatus(`Стиснення та завантаження фото ${i + 1}/${n}...`);
+          const compressed = await compressHousingImage(imageFiles[i]);
+          const url = await uploadHousingPhoto(compressed, created.id, user.id);
+          imageUrls.push(url);
+        }
+        setPhotoUploadStatus(null);
+        if (imageUrls.length) await updateHousing(created.id, { images: imageUrls });
+      }
       console.log('[Housing] Успішно збережено.');
       emitEvent(Events.HOUSING_ADDED);
       alert('Оголошення про житло успішно додано!');
@@ -289,6 +327,7 @@ export function HousingFormModal({ onClose }) {
       alert(`Помилка при додаванні житла:\n\n${formatSupabaseError(error)}`);
     } finally {
       setSubmitting(false);
+      setPhotoUploadStatus(null);
     }
   };
 
@@ -398,6 +437,52 @@ export function HousingFormModal({ onClose }) {
           value={formData.website}
           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
         />
+
+        {user && (
+          <div>
+            <label className="block text-sm font-bold text-gray-900 mb-2">Фотографії житла</label>
+            <p className="text-xs text-gray-500 mb-2">
+                До {HOUSING_PHOTOS.maxCount} фото, до 10 MB кожне. JPG, PNG, WebP, GIF. Фото стискаються перед завантаженням.
+              </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              className="hidden"
+              onChange={(e) => { addImages(e.target.files); e.target.value = ''; }}
+            />
+            <div className="flex flex-wrap gap-3">
+              {imagePreviews.map((src, i) => (
+                <div key={i} className="relative group">
+                  <img src={src} alt="" className="w-20 h-20 object-cover rounded-xl border-2 border-amber-200" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 shadow"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+              {imagePreviews.length < HOUSING_PHOTOS.maxCount && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 flex items-center justify-center text-amber-600 hover:bg-amber-100 transition-colors"
+                >
+                  <ImagePlus size={24} />
+                </button>
+              )}
+            </div>
+            {photoUploadStatus && (
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800">
+                <Loader2 size={18} className="animate-spin flex-shrink-0" />
+                <span className="text-sm font-medium">{photoUploadStatus}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <FormActions onCancel={onClose} onSubmit={handleSubmit} submitting={submitting} />
@@ -410,6 +495,7 @@ export function ServiceFormModal({ onClose }) {
   const [formData, setFormData] = useState({
     name: '',
     category: 'medical',
+    profession: '',
     description: '',
     address: '',
     district: '',
@@ -443,7 +529,7 @@ export function ServiceFormModal({ onClose }) {
 
       const serviceData = {
         name: formData.name.trim(),
-        profession: null, // Професія більше не використовується
+        profession: ['medical', 'food', 'beauty'].includes(formData.category) && formData.profession ? formData.profession.trim() : null,
         category: formData.category || 'medical',
         description: formData.description?.trim() || null,
         address: formData.address.trim(),
@@ -487,7 +573,15 @@ export function ServiceFormModal({ onClose }) {
         <Select
           label="Категорія *"
           value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+          onChange={(e) => {
+            const cat = e.target.value;
+            const hasSubcat = ['medical', 'food', 'beauty'].includes(cat);
+            setFormData({
+              ...formData,
+              category: cat,
+              profession: hasSubcat ? formData.profession : '',
+            });
+          }}
           options={[
             { value: 'medical', label: 'Медицина' },
             { value: 'food', label: 'Гастрономія' },
@@ -497,6 +591,108 @@ export function ServiceFormModal({ onClose }) {
             { value: 'other', label: 'Інше' },
           ]}
         />
+
+        <AnimatePresence>
+          {formData.category === 'medical' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Спеціалізація лікаря</label>
+                <div className="flex flex-wrap gap-2">
+                  {MEDICINE_PROFESSIONS.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">Оберіть спеціалізацію (опційно)</p>
+              </div>
+            </motion.div>
+          )}
+          {formData.category === 'food' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Тип закладу</label>
+                <div className="flex flex-wrap gap-2">
+                  {GASTRONOMY_SUBCATEGORIES.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">Оберіть тип закладу (опційно)</p>
+              </div>
+            </motion.div>
+          )}
+          {formData.category === 'beauty' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Тип послуги</label>
+                <div className="flex flex-wrap gap-2">
+                  {BEAUTY_SUBCATEGORIES.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">Оберіть тип послуги (опційно)</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <Input
           label="Адреса *"

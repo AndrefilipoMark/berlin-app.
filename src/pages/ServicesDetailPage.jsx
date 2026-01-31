@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, Stethoscope, MapPin, Phone, Mail, Globe, X, Edit2, Trash2, Utensils, Scissors, Scale, Languages, Compass, HelpCircle } from 'lucide-react';
 import { getServiceById, deleteService, updateService, supabase } from '../lib/supabase';
 import { emitEvent, Events } from '../lib/events';
+import { MEDICINE_PROFESSIONS, GASTRONOMY_SUBCATEGORIES, BEAUTY_SUBCATEGORIES } from '../lib/constants';
 
 const SERVICES_CATEGORIES = [
   { id: '', label: 'Всі', icon: Compass },
@@ -332,6 +333,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
     const initialData = {
       name: service?.name || '',
       category: service?.category || 'medical',
+      profession: service?.profession || '',
       description: service?.description || '',
       address: service?.address || '',
       phone: service?.phone || '',
@@ -358,7 +360,7 @@ function EditServiceModal({ service, onClose, onSuccess }) {
 
       const serviceData = {
         name: formData.name.trim(),
-        profession: null, // Професія більше не використовується
+        profession: ['medical', 'food', 'beauty'].includes(formData.category) && formData.profession ? formData.profession.trim() : null,
         category: formData.category || 'medical',
         description: formData.description?.trim() || null,
         address: formData.address.trim(),
@@ -445,7 +447,15 @@ function EditServiceModal({ service, onClose, onSuccess }) {
               <label className="block text-sm font-bold text-gray-900 mb-2">Категорія *</label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => {
+                  const cat = e.target.value;
+                  const hasSubcat = ['medical', 'food', 'beauty'].includes(cat);
+                  setFormData({
+                    ...formData,
+                    category: cat,
+                    profession: hasSubcat ? formData.profession : '',
+                  });
+                }}
                 className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all"
               >
                 <option value="medical">Медицина</option>
@@ -456,6 +466,79 @@ function EditServiceModal({ service, onClose, onSuccess }) {
                 <option value="other">Інше</option>
               </select>
             </div>
+
+            {formData.category === 'medical' && (
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Спеціалізація лікаря</label>
+                <div className="flex flex-wrap gap-2">
+                  {MEDICINE_PROFESSIONS.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {formData.category === 'food' && (
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Тип закладу</label>
+                <div className="flex flex-wrap gap-2">
+                  {GASTRONOMY_SUBCATEGORIES.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {formData.category === 'beauty' && (
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Тип послуги</label>
+                <div className="flex flex-wrap gap-2">
+                  {BEAUTY_SUBCATEGORIES.map((p) => {
+                    const isActive = formData.profession === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
+                        className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">Адреса *</label>

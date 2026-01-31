@@ -1,15 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Home as HomeIcon, MapPin, Euro, Maximize, Users, Mail, Phone, Globe, Building2, Layout, Warehouse, X, Edit2, Trash2, MessageSquare } from 'lucide-react';
-import { getHousingById, deleteHousing, updateHousing, supabase, getProfilesByIds } from '../lib/supabase';
+import { ArrowLeft, Home as HomeIcon, MapPin, Euro, Maximize, Users, Mail, Phone, Globe, Building2, Layout, Warehouse, X, Edit2, Trash2, MessageSquare, ImagePlus, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { getHousingById, deleteHousing, updateHousing, uploadHousingPhoto, deleteHousingPhotoFromStorage, supabase, getProfilesByIds } from '../lib/supabase';
+import { compressHousingImage } from '../lib/compressImage';
 import UserProfileModal from '../components/UserProfileModal';
 import GuestGuard from '../components/GuestGuard';
 import LoginModal from '../components/LoginModal';
 import RegisterModal from '../components/RegisterModal';
 import { emitEvent, Events } from '../lib/events';
-import { BERLIN_DISTRICTS } from '../lib/constants';
+import { BERLIN_DISTRICTS, HOUSING_PHOTOS } from '../lib/constants';
 
 export default function HousingDetailPage() {
   const { id } = useParams();
@@ -25,11 +26,28 @@ export default function HousingDetailPage() {
   const [showGuestGuard, setShowGuestGuard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
     loadHousing();
   }, [id]);
+
+  useEffect(() => {
+    setGalleryIndex(0);
+  }, [housing?.id, housing?.images]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setLightboxOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [lightboxOpen]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -227,6 +245,135 @@ export default function HousingDetailPage() {
 
         {/* Main Content */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50">
+          {/* Gallery */}
+          {(() => {
+            const imgs = Array.isArray(housing?.images) ? housing.images : [];
+            if (imgs.length === 0) return null;
+            const idx = Math.min(galleryIndex, imgs.length - 1);
+            const curr = imgs[idx];
+            return (
+              <div className="mb-6 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+                <div className="relative aspect-[16/10] md:aspect-[2/1]">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    className="absolute inset-0 w-full h-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-vibrant-yellow focus:ring-inset rounded-t-2xl"
+                    aria-label="Відкрити фото повністю"
+                  >
+                    <img src={curr} alt="" className="w-full h-full object-cover cursor-zoom-in" />
+                  </button>
+                  {imgs.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setGalleryIndex((i) => (i <= 0 ? imgs.length - 1 : i - 1)); }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors z-10"
+                        aria-label="Попереднє фото"
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setGalleryIndex((i) => (i >= imgs.length - 1 ? 0 : i + 1)); }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors z-10"
+                        aria-label="Наступне фото"
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                        {imgs.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setGalleryIndex(i); }}
+                            className={`w-2.5 h-2.5 rounded-full transition-colors ${i === idx ? 'bg-white' : 'bg-white/50 hover:bg-white/70'}`}
+                            aria-label={`Фото ${i + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {imgs.length > 1 && (
+                  <div className="flex gap-2 p-2 overflow-x-auto bg-gray-50">
+                    {imgs.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => { setGalleryIndex(i); setLightboxOpen(true); }}
+                        className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors cursor-zoom-in ${i === idx ? 'border-vibrant-yellow' : 'border-transparent hover:border-gray-300'}`}
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {lightboxOpen && createPortal(
+                  <div
+                    className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+                    onClick={() => setLightboxOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Фото повністю"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setLightboxOpen(false)}
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-20"
+                      aria-label="Закрити"
+                    >
+                      <X size={24} />
+                    </button>
+                    {imgs.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setGalleryIndex((i) => (i <= 0 ? imgs.length - 1 : i - 1)); }}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-20"
+                          aria-label="Попереднє фото"
+                        >
+                          <ChevronLeft size={28} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setGalleryIndex((i) => (i >= imgs.length - 1 ? 0 : i + 1)); }}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-20"
+                          aria-label="Наступне фото"
+                        >
+                          <ChevronRight size={28} />
+                        </button>
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                          {imgs.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setGalleryIndex(i); }}
+                              className={`w-2.5 h-2.5 rounded-full transition-colors ${i === idx ? 'bg-white' : 'bg-white/40 hover:bg-white/60'}`}
+                              aria-label={`Фото ${i + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <div
+                      className="max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <img
+                        src={imgs[idx]}
+                        alt=""
+                        className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>,
+                  document.body
+                )}
+              </div>
+            );
+          })()}
+
           {/* Header */}
           <div className="mb-6 pb-6 border-b border-gray-100">
             <div className="flex items-start justify-between mb-4">
@@ -440,8 +587,9 @@ export default function HousingDetailPage() {
 
       {/* Edit Housing Modal */}
       {editingHousing && createPortal(
-        <EditHousingModal 
+        <EditHousingModal
           housing={editingHousing}
+          user={user}
           onClose={() => setEditingHousing(null)}
           onSuccess={async (updatedData) => {
             console.log('[HousingDetailPage] onSuccess викликано з даними:', updatedData);
@@ -498,7 +646,7 @@ export default function HousingDetailPage() {
 }
 
 // Edit Housing Modal Component
-function EditHousingModal({ housing, onClose, onSuccess }) {
+function EditHousingModal({ housing, user, onClose, onSuccess }) {
   const [formData, setFormData] = useState(() => {
     const initialData = {
       title: housing?.title || '',
@@ -514,15 +662,49 @@ function EditHousingModal({ housing, onClose, onSuccess }) {
       contact_phone: housing?.contact_phone || '',
       website: housing?.website || '',
     };
-    console.log('[EditHousingModal] Ініціалізація formData з housing:', housing);
-    console.log('[EditHousingModal] Початкові дані форми:', initialData);
     return initialData;
   });
   const [submitting, setSubmitting] = useState(false);
+  const [photoUploadStatus, setPhotoUploadStatus] = useState(null);
+  const [images, setImages] = useState(() => Array.isArray(housing?.images) ? [...housing.images] : []);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const addImages = (files) => {
+    const list = Array.from(files || []);
+    const valid = list.filter((f) => f.type.startsWith('image/') && f.size <= HOUSING_PHOTOS.maxSizeBytes);
+    const invalidSize = list.filter((f) => f.type.startsWith('image/') && f.size > HOUSING_PHOTOS.maxSizeBytes);
+    if (invalidSize.length) {
+      alert(`Деякі фото більші за 10 MB — вони пропущені. Макс. ${HOUSING_PHOTOS.maxCount} фото.`);
+    }
+    const total = images.length + imageFiles.length;
+    const toAdd = valid.slice(0, Math.max(0, HOUSING_PHOTOS.maxCount - total));
+    if (toAdd.length === 0 && valid.length > 0) {
+      alert(`Максимум ${HOUSING_PHOTOS.maxCount} фото на оголошення.`);
+      return;
+    }
+    const newFiles = [...imageFiles, ...toAdd];
+    setImageFiles(newFiles);
+    Promise.all(
+      toAdd.map((f) => new Promise((res) => {
+        const r = new FileReader();
+        r.onloadend = () => res(r.result);
+        r.readAsDataURL(f);
+      }))
+    ).then((previews) => setImagePreviews((p) => [...p, ...previews]));
+  };
+
+  const removeExistingImage = (i) => {
+    setImages((prev) => prev.filter((_, j) => j !== i));
+  };
+
+  const removeNewImage = (i) => {
+    setImageFiles((f) => f.filter((_, j) => j !== i));
+    setImagePreviews((p) => p.filter((_, j) => j !== i));
+  };
 
   const handleSubmit = async () => {
-    console.log('[EditHousingModal] handleSubmit викликано, formData:', formData);
-    
     if (!formData.title || !formData.price || !formData.address || !formData.description || !formData.contact_phone) {
       alert('Будь ласка, заповніть усі обов\'язкові поля (*)');
       return;
@@ -546,42 +728,51 @@ function EditHousingModal({ housing, onClose, onSuccess }) {
         website: formData.website?.trim() || null,
       };
 
-      console.log('[EditHousingModal] Відправка оновлення...', { id: housing.id, housingData });
-      console.log('[EditHousingModal] Повний об\'єкт housingData:', JSON.stringify(housingData, null, 2));
-      
-      // Перевірка, що дані не порожні
       if (!housingData.title || !housingData.price) {
-        console.error('[EditHousingModal] Помилка: housingData порожній або некоректний:', housingData);
         alert('Помилка: дані форми некоректні. Спробуйте ще раз.');
         setSubmitting(false);
         return;
       }
-      
+
+      const originalUrls = Array.isArray(housing?.images) ? housing.images : [];
+      const removedUrls = originalUrls.filter((url) => !images.includes(url));
+      for (const url of removedUrls) {
+        try {
+          await deleteHousingPhotoFromStorage(url);
+        } catch (e) {
+          console.warn('[EditHousing] Не вдалося видалити фото з Storage:', url, e);
+        }
+      }
+
+      let imageUrls = [...images];
+      if (user?.id && imageFiles.length > 0) {
+        const n = imageFiles.length;
+        for (let i = 0; i < n; i++) {
+          setPhotoUploadStatus(`Стиснення та завантаження фото ${i + 1}/${n}...`);
+          const compressed = await compressHousingImage(imageFiles[i]);
+          const url = await uploadHousingPhoto(compressed, housing.id, user.id);
+          imageUrls.push(url);
+        }
+        setPhotoUploadStatus(null);
+      }
+      housingData.images = imageUrls;
+
       const updated = await updateHousing(housing.id, housingData);
-      console.log('[EditHousingModal] Оновлено:', updated);
-      console.log('[EditHousingModal] Порівняння: очікувані дані:', housingData, 'отримані дані:', updated);
-      
+
       if (!updated) {
-        console.error('[EditHousingModal] Помилка: оновлені дані не отримано');
         alert('Помилка при оновленні. Спробуйте ще раз.');
         setSubmitting(false);
         return;
       }
-      
-      // Перевірка, чи дані дійсно оновились
-      if (updated.price !== parseInt(housingData.price, 10) || updated.title !== housingData.title) {
-        console.warn('[EditHousingModal] УВАГА: Дані не збігаються! Очікувалось:', housingData, 'Отримано:', updated);
-        console.warn('[EditHousingModal] Можлива проблема з RLS політиками або кешуванням');
-      }
-      
+
       alert('Оголошення успішно оновлено!');
-      // Передаємо оновлені дані в onSuccess ПЕРЕД закриттям модального вікна
       onSuccess(updated);
     } catch (error) {
       console.error('Error updating housing:', error);
       alert(`Помилка при оновленні оголошення:\n\n${error.message || 'Невідома помилка'}`);
     } finally {
       setSubmitting(false);
+      setPhotoUploadStatus(null);
     }
   };
 
@@ -753,6 +944,62 @@ function EditHousingModal({ housing, onClose, onSuccess }) {
                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-vibrant-yellow focus:border-vibrant-yellow transition-all"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-900 mb-2">Фотографії житла</label>
+              <p className="text-xs text-gray-500 mb-2">
+                До {HOUSING_PHOTOS.maxCount} фото, до 10 MB кожне. JPG, PNG, WebP, GIF. Фото стискаються перед завантаженням.
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                className="hidden"
+                onChange={(e) => { addImages(e.target.files); e.target.value = ''; }}
+              />
+              <div className="flex flex-wrap gap-3">
+                {images.map((url, i) => (
+                  <div key={`ex-${i}`} className="relative group">
+                    <img src={url} alt="" className="w-20 h-20 object-cover rounded-xl border-2 border-amber-200" />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(i)}
+                      className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 shadow"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+                {imagePreviews.map((src, i) => (
+                  <div key={`new-${i}`} className="relative group">
+                    <img src={src} alt="" className="w-20 h-20 object-cover rounded-xl border-2 border-amber-200" />
+                    <button
+                      type="button"
+                      onClick={() => removeNewImage(i)}
+                      className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-90 group-hover:opacity-100 shadow"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+                {images.length + imagePreviews.length < HOUSING_PHOTOS.maxCount && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 flex items-center justify-center text-amber-600 hover:bg-amber-100 transition-colors"
+                  >
+                    <ImagePlus size={24} />
+                  </button>
+                )}
+              </div>
+              {photoUploadStatus && (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800">
+                  <Loader2 size={18} className="animate-spin flex-shrink-0" />
+                  <span className="text-sm font-medium">{photoUploadStatus}</span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -21,8 +21,18 @@ export default function HousingCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => navigate(`/housing/${item.id}`)}
-      className="bg-white rounded-3xl p-5 md:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] border-2 border-gray-300 hover:border-amber-400 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01] overflow-hidden"
+      className="bg-white rounded-3xl p-0 overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] border-2 border-gray-300 hover:border-amber-400 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01]"
     >
+      {Array.isArray(item.images) && item.images.length > 0 ? (
+        <div className="aspect-[16/10] w-full flex-shrink-0 overflow-hidden rounded-t-3xl bg-gray-100">
+          <img
+            src={item.images[0]}
+            alt=""
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      ) : null}
+      <div className="p-5 md:p-6 flex flex-col flex-1">
       {/* Header: Title + Category */}
       <div className="flex justify-between items-start gap-3 mb-3">
         <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-amber-600 transition-colors">
@@ -120,6 +130,7 @@ export default function HousingCard({
         {item.size && (
           <span className="text-xs text-gray-400">{item.size}м²</span>
         )}
+      </div>
       </div>
     </motion.article>
   );

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { User, Users, MapPin, FileText, Save, Loader2, CheckCircle, Camera, Calendar, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { compressAvatarImage } from '../lib/compressImage';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -199,24 +200,20 @@ export default function ProfileSettings() {
     try {
       setUploadingAvatar(true);
 
-      // Створюємо preview
+      const compressed = await compressAvatarImage(file);
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressed);
 
-      // Завантажуємо в Supabase Storage
-      // Використовуємо структуру папок: avatars/{user_id}/{filename}
-      // Це потрібно для RLS політик
-      const fileExt = file.name.split('.').pop();
+      const fileExt = (compressed.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      // Видаляємо старе зображення, якщо воно є
       if (formData.avatar_url) {
         try {
-          // Витягуємо шлях з URL (формат: .../avatars/{user_id}/{filename})
           const urlParts = formData.avatar_url.split('/avatars/');
           if (urlParts.length > 1) {
             const oldPath = urlParts[1];
@@ -227,11 +224,9 @@ export default function ProfileSettings() {
         }
       }
 
-      // Завантажуємо нове зображення
-      // Використовуємо upsert: true, щоб перезаписати, якщо файл вже існує
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, {
+        .upload(filePath, compressed, {
           cacheControl: '3600',
           upsert: true
         });

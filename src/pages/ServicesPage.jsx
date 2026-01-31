@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
@@ -10,10 +10,27 @@ import {
   Scale,
   Languages,
   HelpCircle,
+  Smile,
+  Baby,
+  Venus,
+  Brain,
+  Dog,
+  Sparkles,
+  Bone,
+  Eye,
+  Droplets,
+  Activity,
+  Coffee,
+  Wine,
+  Croissant,
+  Store,
+  Home,
+  Palette,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase, getServices, getProfilesByIds } from '../lib/supabase';
 import { onEvent, Events } from '../lib/events';
+import { MEDICINE_PROFESSIONS, GASTRONOMY_SUBCATEGORIES, BEAUTY_SUBCATEGORIES } from '../lib/constants';
 import UserProfileModal from '../components/UserProfileModal';
 import GuestGuard from '../components/GuestGuard';
 import LoginModal from '../components/LoginModal';
@@ -29,6 +46,65 @@ const SERVICES_CATEGORIES = [
   { id: 'other', label: 'Інше', icon: HelpCircle },
 ];
 
+/** Іконки для спеціалізацій медицини */
+const MEDICINE_ICONS = {
+  Стоматолог: Smile,
+  Терапевт: Stethoscope,
+  Педіатр: Baby,
+  Гінеколог: Venus,
+  Психолог: Brain,
+  Ветеринар: Dog,
+  Дерматолог: Sparkles,
+  Ортопед: Bone,
+  Окуліст: Eye,
+  Уролог: Droplets,
+  Фізіотерапевт: Activity,
+};
+
+/** Іконки для гастрономії */
+const GASTRONOMY_ICONS = {
+  Ресторани: Utensils,
+  Кафе: Coffee,
+  Бари: Wine,
+  Пекарні: Croissant,
+};
+
+/** Іконки для Beauty */
+const BEAUTY_ICONS = {
+  'Салони краси': Store,
+  Перукарні: Scissors,
+  'Майстри вдома': Home,
+  Косметологія: Palette,
+};
+
+/** Конфіг підкатегорій для кожної категорії */
+const SUBCATEGORIES_CONFIG = {
+  medical: {
+    allLabel: 'Всі лікарі',
+    allIcon: Stethoscope,
+    items: [
+      { id: null, label: 'Всі лікарі', icon: Stethoscope },
+      ...MEDICINE_PROFESSIONS.map((p) => ({ ...p, icon: MEDICINE_ICONS[p.id] || Stethoscope })),
+    ],
+  },
+  food: {
+    allLabel: 'Всі заклади',
+    allIcon: Utensils,
+    items: [
+      { id: null, label: 'Всі заклади', icon: Utensils },
+      ...GASTRONOMY_SUBCATEGORIES.map((p) => ({ ...p, icon: GASTRONOMY_ICONS[p.id] || Utensils })),
+    ],
+  },
+  beauty: {
+    allLabel: 'Всі послуги',
+    allIcon: Scissors,
+    items: [
+      { id: null, label: 'Всі послуги', icon: Scissors },
+      ...BEAUTY_SUBCATEGORIES.map((p) => ({ ...p, icon: BEAUTY_ICONS[p.id] || Scissors })),
+    ],
+  },
+};
+
 export default function ServicesPage() {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
@@ -36,6 +112,7 @@ export default function ServicesPage() {
   const [authorNamesMap, setAuthorNamesMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null); // profession filter для Медицина
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [user, setUser] = useState(null);
@@ -66,8 +143,14 @@ export default function ServicesPage() {
     if (selectedCategory) {
       result = result.filter((s) => s.category === selectedCategory);
     }
+    if (selectedSubcategory && ['medical', 'food', 'beauty'].includes(selectedCategory)) {
+      const prof = String(selectedSubcategory).toLowerCase();
+      result = result.filter(
+        (s) => s.profession && String(s.profession).toLowerCase().includes(prof)
+      );
+    }
     setFilteredServices(result);
-  }, [services, selectedCategory]);
+  }, [services, selectedCategory, selectedSubcategory]);
 
   const loadServices = async () => {
     try {
@@ -136,7 +219,7 @@ export default function ServicesPage() {
         </div>
 
         {/* Category Filters */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex flex-wrap gap-2.5 md:gap-3">
             {SERVICES_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
@@ -144,7 +227,10 @@ export default function ServicesPage() {
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => {
+                    setSelectedCategory(cat.id);
+                    setSelectedSubcategory(null);
+                  }}
                   className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
                     isActive
                       ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
@@ -157,6 +243,40 @@ export default function ServicesPage() {
               );
             })}
           </div>
+
+          {/* Підкатегорії — для Медицина, Гастрономія, Beauty */}
+          <AnimatePresence>
+            {SUBCATEGORIES_CONFIG[selectedCategory] && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {SUBCATEGORIES_CONFIG[selectedCategory].items.map((sub) => {
+                    const SubIcon = sub.icon;
+                    const isSubActive = selectedSubcategory === sub.id;
+                    return (
+                      <button
+                        key={sub.id ?? 'all'}
+                        onClick={() => setSelectedSubcategory(sub.id)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
+                          isSubActive
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                        }`}
+                      >
+                        <SubIcon size={14} className={isSubActive ? 'text-white' : 'text-teal-500'} />
+                        {sub.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content */}

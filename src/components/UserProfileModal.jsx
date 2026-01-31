@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, User, UserPlus, Check, X as XIcon, MessageSquare, Loader2, Trash2, Ban, ExternalLink, MoreHorizontal } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase, getFriendshipStatus, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend, blockUser, isUserBlocked } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import QuickMessageModal from './QuickMessageModal';
@@ -19,6 +20,7 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showMoreActions, setShowMoreActions] = useState(false);
+  const [avatarLightboxOpen, setAvatarLightboxOpen] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -68,6 +70,17 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
       loadFriendshipStatus();
     }
   }, [currentUser?.id, userId]);
+
+  useEffect(() => {
+    if (!avatarLightboxOpen) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setAvatarLightboxOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [avatarLightboxOpen]);
 
   const handleAddFriend = async () => {
     if (!currentUser?.id || actionLoading) return;
@@ -261,11 +274,18 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
           <div className="p-4 md:p-6 space-y-5">
             <div className="flex items-center gap-4">
               {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt=""
-                  className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 ring-2 ring-gray-100"
-                />
+                <button
+                  type="button"
+                  onClick={() => setAvatarLightboxOpen(true)}
+                  className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 ring-2 ring-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-zoom-in"
+                  aria-label="Відкрити аватар повністю"
+                >
+                  <img
+                    src={profile.avatar_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
               ) : (
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-azure-blue to-blue-600 flex items-center justify-center flex-shrink-0 text-white text-xl font-bold">
                   {initial}
@@ -451,6 +471,37 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
         confirmColor="red"
         loading={actionLoading}
       />
+    )}
+
+    {avatarLightboxOpen && profile?.avatar_url && createPortal(
+      <div
+        className="fixed inset-0 z-[99999] bg-black/95 flex items-center justify-center"
+        onClick={() => setAvatarLightboxOpen(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Аватар повністю"
+      >
+        <button
+          type="button"
+          onClick={() => setAvatarLightboxOpen(false)}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-20"
+          aria-label="Закрити"
+        >
+          <X size={24} />
+        </button>
+        <div
+          className="max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={profile.avatar_url}
+            alt={profile.full_name || 'Аватар'}
+            className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-lg"
+            draggable={false}
+          />
+        </div>
+      </div>,
+      document.body
     )}
   </>
   );

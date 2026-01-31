@@ -432,6 +432,37 @@ export const deleteHousing = async (id) => {
   if (error) throw error;
 };
 
+const HOUSING_PHOTOS_BUCKET = 'housing-photos';
+
+/** Завантажити фото житла в Storage. Повертає публічний URL. */
+export const uploadHousingPhoto = async (file, housingId, userId) => {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const path = `${userId}/${housingId}/${unique}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(HOUSING_PHOTOS_BUCKET)
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(HOUSING_PHOTOS_BUCKET)
+    .getPublicUrl(path);
+
+  return publicUrl;
+};
+
+/** Видалити фото з Storage за публічним URL. */
+export const deleteHousingPhotoFromStorage = async (publicUrl) => {
+  if (!publicUrl || typeof publicUrl !== 'string') return;
+  const marker = `/${HOUSING_PHOTOS_BUCKET}/`;
+  const i = publicUrl.indexOf(marker);
+  if (i === -1) return;
+  const path = publicUrl.slice(i + marker.length);
+  await supabase.storage.from(HOUSING_PHOTOS_BUCKET).remove([path]);
+};
+
 // Services — при помилці повертаємо []
 export const getServices = async () => {
   try {
