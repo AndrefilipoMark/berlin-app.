@@ -17,6 +17,7 @@ import AdminPage from './pages/AdminPage';
 import ProfileSettings from './pages/ProfileSettings';
 import PublicProfile from './pages/PublicProfile';
 import MessagesPage from './pages/MessagesPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import Impressum from './pages/legal/Impressum';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfUse from './pages/legal/TermsOfUse';
@@ -209,6 +210,16 @@ function AnimatedRoutes() {
             exit="exit"
           >
             <TermsOfUse />
+          </motion.div>
+        } />
+        <Route path="/reset-password" element={
+          <motion.div
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <ResetPasswordPage />
           </motion.div>
         } />
       </Routes>

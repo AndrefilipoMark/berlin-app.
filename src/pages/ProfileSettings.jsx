@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { User, Users, MapPin, FileText, Save, Loader2, CheckCircle, Camera, Calendar, ArrowLeft } from 'lucide-react';
+import { User, Users, MapPin, FileText, Save, Loader2, CheckCircle, Camera, Calendar, ArrowLeft, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, requestAccountDeletion } from '../lib/supabase';
+import ConfirmModal from '../components/ConfirmModal';
 import { compressAvatarImage } from '../lib/compressImage';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
@@ -39,6 +40,8 @@ export default function ProfileSettings() {
   });
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -303,6 +306,24 @@ export default function ProfileSettings() {
       setUploadingAvatar(false);
       // Очищаємо input
       e.target.value = '';
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setDeleting(true);
+      await requestAccountDeletion({
+        id: user.id,
+        full_name: formData.full_name || user?.user_metadata?.full_name,
+        email: user?.email,
+      });
+      toast.success('Ваш запит надіслано адміну. Очікуйте підтвердження.', { duration: 4000 });
+      setShowDeleteModal(false);
+    } catch (err) {
+      const msg = err?.message || err?.error || 'Не вдалося надіслати запит';
+      toast.error('Помилка: ' + msg, { duration: 5000 });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -604,8 +625,50 @@ export default function ProfileSettings() {
                 </div>
               </div>
             </div>
+
+            {/* Delete Account */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="lg:col-span-3 bg-white rounded-3xl p-6 shadow-sm border border-red-100"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
+                    <Trash2 size={24} className="text-red-600" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Видалити акаунт</h3>
+                    <p className="text-sm text-gray-600">
+                      Подайте запит адміністратору. Після підтвердження акаунт буде видалено.
+                    </p>
+                  </div>
+                </div>
+                    <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  disabled={deleting}
+                  className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-2xl border border-red-200 transition-colors disabled:opacity-50"
+                >
+                  Подати запит на видалення
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         </form>
+
+        <ConfirmModal
+          isOpen={showDeleteModal}
+          onClose={() => !deleting && setShowDeleteModal(false)}
+          onConfirm={handleDeleteAccount}
+          title="Запит на видалення акаунту"
+          message="Ваш запит буде надісланий адміністратору. Після підтвердження ваш акаунт буде видалено. Всі ваші дані будуть втрачені назавжди."
+          confirmText="Так, надіслати запит"
+          cancelText="Скасувати"
+          confirmColor="red"
+          loading={deleting}
+        />
       </div>
     </div>
   );

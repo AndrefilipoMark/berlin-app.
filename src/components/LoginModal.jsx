@@ -9,6 +9,8 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [view, setView] = useState('login'); // 'login' or 'forgot-password'
+  const [resetSent, setResetSent] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,6 +44,32 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
       } else {
         setError(error.message);
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!email) {
+      setError('Будь ласка, введіть ваш email');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      setResetSent(true);
+    } catch (error) {
+      console.error('Reset password error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -88,102 +116,155 @@ export default function LoginModal({ onClose, onSwitchToRegister }) {
               <LogIn size={32} className="text-white" strokeWidth={2.5} />
             </div>
             <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
-              Вхід
+              {view === 'login' ? 'Вхід' : 'Відновлення пароля'}
             </h2>
             <p className="text-sm text-gray-600">
-              З поверненням у спільноту!
+              {view === 'login' 
+                ? 'З поверненням у спільноту!' 
+                : 'Введіть ваш email, щоб отримати посилання для зміни пароля'}
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-red-50 border border-red-200 rounded-2xl"
+          {resetSent ? (
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
+                <p className="text-sm text-green-700 font-medium">
+                  Посилання для відновлення пароля надіслано на вашу пошту. Будь ласка, перевірте її.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setView('login');
+                  setResetSent(false);
+                }}
+                className="text-azure-blue font-bold hover:underline transition-colors"
               >
-                <p className="text-sm text-red-600 font-medium">{error}</p>
-              </motion.div>
-            )}
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-bold text-slate-900 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail 
-                  size={20} 
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" 
-                />
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 rounded-2xl border-2 border-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-azure-blue focus:bg-white transition-all"
-                  disabled={loading}
-                  autoComplete="email"
-                />
-              </div>
+                Повернутися до входу
+              </button>
             </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-bold text-slate-900 mb-2">
-                Пароль
-              </label>
-              <div className="relative">
-                <Lock 
-                  size={20} 
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" 
-                />
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 rounded-2xl border-2 border-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-azure-blue focus:bg-white transition-all"
-                  disabled={loading}
-                  autoComplete="current-password"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-azure-blue to-blue-600 text-white font-bold rounded-2xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  <span>Вхід...</span>
-                </>
-              ) : (
-                <>
-                  <LogIn size={20} />
-                  <span>Увійти</span>
-                </>
-              )}
-            </button>
-
-            {/* Switch to Register */}
-            <div className="text-center pt-5 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Немає акаунта?{' '}
-                <button
-                  type="button"
-                  onClick={onSwitchToRegister}
-                  className="text-azure-blue font-bold hover:underline transition-colors"
-                  disabled={loading}
+          ) : (
+            <form onSubmit={view === 'login' ? handleLogin : handleForgotPassword} className="space-y-5">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-red-50 border border-red-200 rounded-2xl"
                 >
-                  Зареєструватися
-                </button>
-              </p>
-            </div>
-          </form>
+                  <p className="text-sm text-red-600 font-medium">{error}</p>
+                </motion.div>
+              )}
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-bold text-slate-900 mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail 
+                    size={20} 
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" 
+                  />
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 rounded-2xl border-2 border-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-azure-blue focus:bg-white transition-all"
+                    disabled={loading}
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              {view === 'login' && (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-bold text-slate-900">
+                      Пароль
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setView('forgot-password')}
+                      className="text-xs font-semibold text-azure-blue hover:underline"
+                      disabled={loading}
+                    >
+                      Забули пароль?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock 
+                      size={20} 
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" 
+                    />
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 rounded-2xl border-2 border-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-azure-blue focus:bg-white transition-all"
+                      disabled={loading}
+                      autoComplete="current-password"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-azure-blue to-blue-600 text-white font-bold rounded-2xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    <span>{view === 'login' ? 'Вхід...' : 'Відправка...'}</span>
+                  </>
+                ) : (
+                  <>
+                    {view === 'login' ? (
+                      <>
+                        <LogIn size={20} />
+                        <span>Увійти</span>
+                      </>
+                    ) : (
+                      <span>Надіслати посилання</span>
+                    )}
+                  </>
+                )}
+              </button>
+
+              {view === 'forgot-password' && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setView('login')}
+                    className="text-sm font-semibold text-gray-500 hover:text-azure-blue transition-colors"
+                    disabled={loading}
+                  >
+                    Повернутися до входу
+                  </button>
+                </div>
+              )}
+
+              {/* Switch to Register */}
+              <div className="text-center pt-5 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Немає акаунта?{' '}
+                  <button
+                    type="button"
+                    onClick={onSwitchToRegister}
+                    className="text-azure-blue font-bold hover:underline transition-colors"
+                    disabled={loading}
+                  >
+                    Зареєструватися
+                  </button>
+                </p>
+              </div>
+            </form>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

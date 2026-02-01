@@ -214,6 +214,10 @@ export default function AdminPage() {
     }
   };
 
+  const handleApproveDeletion = async (message) => {
+    alert(`Для видалення акаунту зайдіть у Supabase Dashboard, знайдіть користувача за Email (${message.user_email}) або ID і видаліть його вручну в розділі Authentication.`);
+  };
+
   const handleUpdateMessageStatus = async (messageId, newStatus) => {
     try {
       const { error } = await supabase
@@ -487,12 +491,14 @@ export default function AdminPage() {
                                    'Вирішено'}
                                 </span>
                                 <span className={`px-2 py-0.5 rounded text-xs ${
+                                  item.message_type === 'account_deletion_request' ? 'bg-red-500/30 text-red-200' :
                                   item.message_type === 'bug' ? 'bg-red-500/20 text-red-300' :
                                   item.message_type === 'suggestion' ? 'bg-purple-500/20 text-purple-300' :
                                   item.message_type === 'feedback' ? 'bg-blue-500/20 text-blue-300' :
                                   'bg-gray-500/20 text-gray-300'
                                 }`}>
-                                  {item.message_type === 'bug' ? 'Баг' :
+                                  {item.message_type === 'account_deletion_request' ? 'Видалення акаунту' :
+                                   item.message_type === 'bug' ? 'Баг' :
                                    item.message_type === 'suggestion' ? 'Пропозиція' :
                                    item.message_type === 'feedback' ? 'Відгук' :
                                    'Загальне'}
@@ -606,12 +612,14 @@ export default function AdminPage() {
                        'Вирішено'}
                     </span>
                     <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                      selectedMessage.message_type === 'account_deletion_request' ? 'bg-red-500/40 text-red-100' :
                       selectedMessage.message_type === 'bug' ? 'bg-red-500/30 text-red-200' :
                       selectedMessage.message_type === 'suggestion' ? 'bg-purple-500/30 text-purple-200' :
                       selectedMessage.message_type === 'feedback' ? 'bg-blue-500/30 text-blue-200' :
                       'bg-gray-500/30 text-gray-200'
                     }`}>
-                      {selectedMessage.message_type === 'bug' ? 'Баг' :
+                      {selectedMessage.message_type === 'account_deletion_request' ? 'Видалення акаунту' :
+                       selectedMessage.message_type === 'bug' ? 'Баг' :
                        selectedMessage.message_type === 'suggestion' ? 'Пропозиція' :
                        selectedMessage.message_type === 'feedback' ? 'Відгук' :
                        'Загальне'}
@@ -687,6 +695,26 @@ export default function AdminPage() {
                     <div className="bg-yellow-500/10 rounded-2xl p-4 border border-yellow-500/20">
                       <h3 className="text-sm font-semibold text-yellow-400 mb-2">Примітки адміна</h3>
                       <div className="text-yellow-200 whitespace-pre-wrap">{selectedMessage.admin_notes}</div>
+                    </div>
+                  )}
+
+                  {/* Info about manual deletion */}
+                  {selectedMessage.message_type === 'account_deletion_request' && (
+                    <div className="bg-red-500/10 rounded-2xl p-4 border border-red-500/20">
+                      <h3 className="text-sm font-semibold text-red-300 mb-2">Запит на видалення акаунту</h3>
+                      <p className="text-gray-300 text-sm mb-3">
+                        Адміністратор має видалити цей акаунт вручну в Supabase Dashboard (Authentication -> Users).
+                      </p>
+                      <div className="bg-black/30 p-3 rounded-lg font-mono text-xs text-blue-200 break-all mb-3">
+                        Email: {selectedMessage.user_email || 'не вказано'}<br/>
+                        ID: {selectedMessage.user_id}
+                      </div>
+                      <button
+                        onClick={() => handleApproveDeletion(selectedMessage)}
+                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/50 rounded-xl transition-colors text-sm font-medium"
+                      >
+                        Як видалити?
+                      </button>
                     </div>
                   )}
 

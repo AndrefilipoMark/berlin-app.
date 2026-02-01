@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, UserPlus, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, UserPlus, Loader2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase, ensureProfile } from '../lib/supabase';
+import { BERLIN_DISTRICTS } from '../lib/constants';
 
 export default function RegisterModal({ onClose, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
     password: '',
     confirmPassword: '',
     agreedToTerms: false,
+    district: '',
     gender: '',
   });
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
         options: {
           data: {
             full_name: formData.fullName,
+            district: formData.district || null,
             gender: formData.gender || null,
           },
         },
@@ -67,6 +70,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
           id: data.user.id,
           email: data.user.email ?? formData.email,
           full_name: formData.fullName || data.user.user_metadata?.full_name || 'Користувач',
+          district: formData.district || data.user.user_metadata?.district || null,
           gender: formData.gender || data.user.user_metadata?.gender || null,
         });
         if (!ok && profileErr) {
@@ -208,6 +212,26 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
                   autoComplete="name"
                 />
               </div>
+            </div>
+
+            {/* District */}
+            <div>
+              <label className="block text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <MapPin size={18} className="text-blue-600" strokeWidth={2} />
+                Твій район у Берліні
+              </label>
+              <select
+                value={formData.district}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-50 rounded-2xl border-2 border-transparent text-slate-900 focus:outline-none focus:border-azure-blue focus:bg-white transition-all"
+                disabled={loading}
+              >
+                <option value="">Оберіть район</option>
+                {BERLIN_DISTRICTS.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-slate-500">Це допоможе знайти сусідів з вашого району</p>
             </div>
 
             {/* Gender */}

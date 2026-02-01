@@ -207,7 +207,7 @@ const ensureProfileLocks = new Set();
 
 /** Створити або оновити профіль (insert, при дублікаті — update). Уникає 400 при upsert. */
 export const ensureProfile = async (payload) => {
-  const { id, email, full_name, gender } = payload;
+  const { id, email, full_name, district, gender } = payload;
   if (!id) return { ok: false, error: new Error('ensureProfile: id required') };
   while (ensureProfileLocks.has(id)) {
     await new Promise((r) => setTimeout(r, 200));
@@ -218,6 +218,7 @@ export const ensureProfile = async (payload) => {
       id,
       email: email ?? null,
       full_name: (full_name && String(full_name).trim()) ? String(full_name).trim() : 'Користувач',
+      district: district != null && String(district).trim() !== '' ? String(district).trim() : null,
       gender: gender != null && String(gender).trim() !== '' ? String(gender).trim() : null,
     };
     const { error: insertErr } = await supabase.from('profiles').insert([row]);
@@ -225,7 +226,7 @@ export const ensureProfile = async (payload) => {
     if (insertErr?.code === '23505' || /unique|duplicate|conflict|23505/i.test(String(insertErr?.message || ''))) {
       const { error: updateErr } = await supabase
         .from('profiles')
-        .update({ email: row.email, full_name: row.full_name, gender: row.gender })
+        .update({ email: row.email, full_name: row.full_name, district: row.district, gender: row.gender })
         .eq('id', id);
       if (!updateErr) return { ok: true };
       console.warn('ensureProfile update failed:', updateErr?.message || updateErr);
@@ -1623,10 +1624,25 @@ export const unblockUser = async (userId, blockedUserId) => {
       .delete()
       .eq('user_id', userId)
       .eq('blocked_user_id', blockedUserId);
-    
+
     if (error) throw error;
   } catch (e) {
     console.error('unblockUser error:', e);
     throw e;
   }
 };
+
+/** Відправити запит на видалення акаунту адміну (зберігає в admin_messages) */
+export const requestAccountDeletion = async (userData) => {
+  const { error } = await supabase.from('admin_messages').insert({
+    user_id: userData.id,
+    user_name: userData.full_name || 'Користувач',
+    user_email: userData.email || null,
+    subject: 'Запит на видалення акаунту',
+    message: 'Користувач хоче видалити свій акаунт з сайту.',
+    message_type: 'account_deletion_request',
+    status: 'new',
+  });
+  if (error) throw error;
+};
+
