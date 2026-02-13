@@ -43,15 +43,15 @@ export default function Housing() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
       whileHover={{ y: -4 }}
-      className="relative bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:-translate-y-1 transition-all duration-300 h-full overflow-hidden"
+      className="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300 h-full overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-white to-white opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-30" />
       
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-vibrant-yellow/10 text-vibrant-yellow border border-vibrant-yellow/20 rounded-2xl flex items-center justify-center shadow-sm">
-              <Home size={22} className="text-vibrant-yellow animate-heartbeat" strokeWidth={2} />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-primary/10 text-primary border border-primary/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Home size={22} className="text-primary animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Житло</h2>
@@ -60,7 +60,7 @@ export default function Housing() {
               </p>
             </div>
           </div>
-          <div className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-full border border-amber-100">
+          <div className="text-[10px] font-bold text-gray-900 bg-accent px-2.5 py-1 rounded-full border border-yellow-400/50 shadow-sm uppercase tracking-wide flex items-center gap-1">
             🔥 Топ
           </div>
         </div>
@@ -91,14 +91,14 @@ export default function Housing() {
                   transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                   whileHover={{ x: -3 }}
                   onClick={() => navigate(`/housing/${listing.id}`)}
-                  className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-amber-400 transition-all cursor-pointer group"
+                  className="p-3 rounded-xl bg-white border border-gray-200 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
                 >
                   <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <h3 className="font-bold text-sm text-gray-900 group-hover:text-amber-600 transition-colors flex-1 line-clamp-1">
+                    <h3 className="font-bold text-sm text-gray-900 group-hover:text-primary transition-colors flex-1 line-clamp-1">
                       {listing.title}
                     </h3>
                     {listing.type && (
-                      <span className="flex-shrink-0 px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-semibold rounded border border-amber-100">
+                      <span className="flex-shrink-0 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-semibold rounded border border-gray-200">
                         {getTypeLabel(listing.type)}
                       </span>
                     )}
@@ -107,24 +107,24 @@ export default function Housing() {
                     <div className="flex items-center gap-2 text-gray-500 flex-wrap">
                       {listing.address && (
                         <span className="flex items-center gap-1">
-                          <MapPin size={11} className="text-amber-500 flex-shrink-0" />
+                          <MapPin size={11} className="text-primary/70 flex-shrink-0" />
                           {listing.address.split(',')[0] || listing.address}
                         </span>
                       )}
                       {listing.size != null && (
                         <span className="flex items-center gap-1">
-                          <HomeIcon size={11} className="text-amber-500 flex-shrink-0" />
+                          <HomeIcon size={11} className="text-primary/70 flex-shrink-0" />
                           {listing.size} м²
                         </span>
                       )}
                       {listing.rooms != null && (
                         <span className="flex items-center gap-1">
-                          <Users size={11} className="text-amber-500 flex-shrink-0" />
+                          <Users size={11} className="text-primary/70 flex-shrink-0" />
                           {listing.rooms} к.
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 font-bold text-amber-600 flex-shrink-0">
+                    <div className="flex items-center gap-1 font-bold text-primary flex-shrink-0">
                       <Euro size={11} />
                       {listing.price}/міс
                     </div>
@@ -137,7 +137,7 @@ export default function Housing() {
                   {listing.district && (
                     <div className="flex justify-end mt-1">
                       <span className="flex items-center gap-1 text-gray-700 text-[10px] font-semibold">
-                        <MapPin size={10} className="text-amber-500 flex-shrink-0" />
+                        <MapPin size={10} className="text-primary/70 flex-shrink-0" />
                         {listing.district}
                       </span>
                     </div>
@@ -152,7 +152,7 @@ export default function Housing() {
           whileTap={{ scale: 0.98 }}
           disabled={loading}
           onClick={() => navigate('/housing')}
-          className="w-full py-2.5 bg-gradient-to-r from-vibrant-yellow to-amber-500 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-accent text-gray-900 text-sm font-bold rounded-xl hover:bg-yellow-500 hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

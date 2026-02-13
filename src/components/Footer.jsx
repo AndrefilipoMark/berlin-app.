@@ -20,9 +20,9 @@ export default function Footer() {
     >
       <div className="max-w-[1600px] mx-auto px-4 md:px-8">
         {isHomePage && (
-          <div className="bg-gradient-to-br from-slate-50 via-white to-blue-50/40 backdrop-blur-lg rounded-[28px] p-6 md:p-8 lg:p-10 border border-slate-200/60 shadow-[0_8px_40px_rgba(0,87,183,0.06)] mb-6 relative">
+          <div className="bg-white rounded-[28px] p-6 md:p-8 lg:p-10 border border-gray-200 shadow-sm mb-6 relative overflow-hidden">
             {/* Декоративна смуга */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-azure-blue via-vibrant-yellow/80 to-azure-blue opacity-90" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-90" />
 
             {/* Про наш сайт — стримано, одним текстом */}
             <div className="mb-8">
@@ -33,15 +33,15 @@ export default function Footer() {
             </div>
 
             {/* Бета-блок — преміальний вигляд */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-amber-50/90 via-orange-50/70 to-amber-50/90 border border-amber-200/60 shadow-inner">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 md:p-6 rounded-2xl bg-gray-50 border border-gray-100">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-400/30 text-amber-800 text-xs font-bold uppercase tracking-wide">
+                  <span className="px-2.5 py-0.5 rounded-full bg-accent/20 text-gray-900 text-xs font-bold uppercase tracking-wide">
                     Beta
                   </span>
-                  <span className="text-sm font-semibold text-amber-900">Сайт в бета-тестуванні</span>
+                  <span className="text-sm font-semibold text-gray-900">Сайт в бета-тестуванні</span>
                 </div>
-                <p className="text-sm text-amber-800/90 leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Деякі функції можуть працювати некоректно. Знайшли помилку чи маєте ідеї? Допоможіть нам стати краще.
                 </p>
               </div>
@@ -60,28 +60,28 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="mt-6 text-center">
-          <div className="inline-block px-6 py-3 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-sm">
-            <p className="font-medium text-gray-400 text-sm mb-2">
+          <div className="inline-block px-6 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm">
+            <p className="font-medium text-gray-500 text-sm mb-2">
               Наш дім Берлін © 2026 • Створено з 💙💛 для української спільноти
             </p>
             <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
               <Link
                 to="/impressum"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-primary transition-colors"
               >
                 Impressum
               </Link>
               <span className="text-gray-300">•</span>
               <Link
                 to="/privacy"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-primary transition-colors"
               >
                 Політика конфіденційності
               </Link>
               <span className="text-gray-300">•</span>
               <Link
                 to="/terms"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-primary transition-colors"
               >
                 Умови використання
               </Link>

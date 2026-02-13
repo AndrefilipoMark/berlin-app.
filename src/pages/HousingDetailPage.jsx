@@ -378,7 +378,7 @@ export default function HousingDetailPage() {
           <div className="mb-6 pb-6 border-b border-gray-100">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 break-words">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 break-words leading-tight">
                   {housing.title}
                 </h1>
                 <div className="flex items-center gap-3 text-gray-600">

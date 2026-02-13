@@ -92,7 +92,7 @@ export function JobFormModal({ onClose }) {
     <FormModalContainer
       title="Додати вакансію"
       icon={Briefcase}
-      iconColor="from-azure-blue to-blue-600"
+      iconColor="text-primary"
       onClose={onClose}
     >
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -335,7 +335,7 @@ export function HousingFormModal({ onClose }) {
     <FormModalContainer
       title="Опублікувати житло"
       icon={Home}
-      iconColor="from-vibrant-yellow to-orange-400"
+      iconColor="text-primary"
       onClose={onClose}
     >
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -469,15 +469,15 @@ export function HousingFormModal({ onClose }) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 flex items-center justify-center text-amber-600 hover:bg-amber-100 transition-colors"
+                  className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:border-primary/50 hover:text-primary transition-colors"
                 >
                   <ImagePlus size={24} />
                 </button>
               )}
             </div>
             {photoUploadStatus && (
-              <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800">
-                <Loader2 size={18} className="animate-spin flex-shrink-0" />
+              <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-gray-700">
+                <Loader2 size={18} className="animate-spin flex-shrink-0 text-primary" />
                 <span className="text-sm font-medium">{photoUploadStatus}</span>
               </div>
             )}
@@ -559,7 +559,7 @@ export function ServiceFormModal({ onClose }) {
     <FormModalContainer
       title="Додати сервіс"
       icon={Sparkles}
-      iconColor="from-teal-500 to-teal-600"
+      iconColor="text-primary"
       onClose={onClose}
     >
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -613,8 +613,8 @@ export function ServiceFormModal({ onClose }) {
                         onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
                         className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
                           isActive
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:border-primary/50 hover:bg-primary/5'
                         }`}
                       >
                         {p.label}
@@ -646,8 +646,8 @@ export function ServiceFormModal({ onClose }) {
                         onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
                         className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
                           isActive
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:border-primary/50 hover:bg-primary/5'
                         }`}
                       >
                         {p.label}
@@ -679,8 +679,8 @@ export function ServiceFormModal({ onClose }) {
                         onClick={() => setFormData({ ...formData, profession: isActive ? '' : p.id })}
                         className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
                           isActive
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:border-primary/50 hover:bg-primary/5'
                         }`}
                       >
                         {p.label}
@@ -814,8 +814,31 @@ export function ForumPostFormModal({ onClose }) {
         user_id: user.id,
       };
       console.log('[Forum] Відправка в Supabase...', { title: postData.title });
-      await createForumPost(postData);
+      const created = await createForumPost(postData);
       console.log('[Forum] Успішно збережено.');
+      
+      // Trigger Auto Reply for Forum
+      const content = (postData.title + ' ' + postData.content).toLowerCase();
+      const delay = 15000 + Math.random() * 30000;
+      setTimeout(async () => {
+        try {
+          await fetch('http://localhost:3000/api/chat/auto-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: content,
+              userId: postData.user_id,
+              userName: postData.author_name,
+              type: 'forum_reply',
+              postId: created.id
+            })
+          });
+          emitEvent(Events.FORUM_POST_ADDED); // Refresh to show reply
+        } catch (e) {
+          console.error('Forum auto-reply failed:', e);
+        }
+      }, delay);
+
       emitEvent(Events.FORUM_POST_ADDED);
       alert('Пост успішно опубліковано!');
       onClose();
@@ -832,7 +855,7 @@ export function ForumPostFormModal({ onClose }) {
     <FormModalContainer
       title="Запитати громаду"
       icon={MessageCircle}
-      iconColor="from-green-500 to-emerald-600"
+      iconColor="text-primary"
       onClose={onClose}
     >
       <div className="space-y-4">
@@ -888,8 +911,8 @@ function FormModalContainer({ title, icon: Icon, iconColor, onClose, children })
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 bg-gradient-to-br ${iconColor} rounded-2xl flex items-center justify-center`}>
-            <Icon size={24} className="text-white" />
+          <div className={`w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center`}>
+            <Icon size={24} className={iconColor || "text-primary"} />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900">{title}</h2>
         </div>
@@ -915,7 +938,7 @@ function Input({ label, type = 'text', placeholder, value, onChange }) {
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue transition-all"
+        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
       />
     </div>
   );
@@ -930,7 +953,7 @@ function Textarea({ label, placeholder, value, onChange, rows = 3 }) {
         value={value}
         onChange={onChange}
         rows={rows}
-        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue transition-all resize-none"
+        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none"
       />
     </div>
   );
@@ -943,7 +966,7 @@ function Select({ label, value, onChange, options }) {
       <select
         value={value}
         onChange={onChange}
-        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-azure-blue focus:border-azure-blue transition-all"
+        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -974,7 +997,7 @@ function LanguageSelector({ selected, onChange }) {
             }}
             className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
               selected.includes(lang)
-                ? 'bg-azure-blue text-white'
+                ? 'bg-primary text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -999,7 +1022,7 @@ function FormActions({ onCancel, onSubmit, submitting }) {
       <button
         onClick={onSubmit}
         disabled={submitting}
-        className="flex-1 px-6 py-3 bg-gradient-to-r from-azure-blue to-blue-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50"
+        className="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-blue-800 hover:shadow-lg transition-all disabled:opacity-50"
       >
         {submitting ? 'Збереження...' : 'Додати'}
       </button>

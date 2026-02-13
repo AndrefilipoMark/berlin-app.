@@ -63,15 +63,15 @@ export default function CommunityPulse() {
       transition={{ duration: 0.5, delay: 0.7 }}
       whileHover={{ y: -4 }}
       onClick={() => navigate('/forum')}
-      className="relative bg-white/80 backdrop-blur-lg rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:-translate-y-1 hover:border-azure-blue/30 transition-all duration-300 overflow-hidden cursor-pointer"
+      className="relative bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 opacity-60" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-30" />
       
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-azure-blue to-azure-blue/70 rounded-2xl flex items-center justify-center shadow-lg">
-              <TrendingUp size={22} className="text-white animate-heartbeat" />
+            <div className="w-12 h-12 bg-primary/10 text-primary border border-primary/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <TrendingUp size={22} className="text-primary animate-heartbeat" />
             </div>
             <div>
               <h2 className="text-2xl font-extrabold text-gray-900">Community Pulse</h2>
@@ -80,7 +80,7 @@ export default function CommunityPulse() {
                 <motion.span
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="w-2 h-2 bg-green-500 rounded-full inline-block"
+                  className="w-2 h-2 bg-primary rounded-full inline-block"
                 />
               </p>
             </div>
@@ -121,15 +121,15 @@ export default function CommunityPulse() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className={`relative p-5 rounded-2xl border transition-all duration-500 ${
                     isActive 
-                      ? 'bg-white border-azure-blue/30 shadow-xl' 
-                      : 'bg-gray-50/80 border-gray-200/50 shadow-md'
+                      ? 'bg-white border-primary/30 shadow-md' 
+                      : 'bg-gray-50/80 border-gray-200/50 shadow-sm'
                   } ${index === 0 ? '' : 'absolute inset-0'}`}
                 >
                   {isTrending && isActive && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-2 -right-2 bg-gradient-to-r from-vibrant-yellow to-orange-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg"
+                      className="absolute -top-2 -right-2 bg-accent text-gray-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm border border-yellow-400/50 uppercase tracking-wide flex items-center gap-1"
                     >
                       🔥 Trending
                     </motion.div>
@@ -152,7 +152,7 @@ export default function CommunityPulse() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-azure-blue text-xs font-bold bg-azure-blue/5 px-3 py-1.5 rounded-full w-fit">
+                  <div className="flex items-center gap-2 text-primary text-xs font-bold bg-primary/5 px-3 py-1.5 rounded-full w-fit border border-primary/10">
                     <MessageSquare size={14} />
                     <span>{item.replies_count || 0} відповідей</span>
                   </div>
@@ -173,8 +173,8 @@ export default function CommunityPulse() {
                 }}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? 'bg-azure-blue w-8' 
-                    : 'bg-gray-300 w-1.5 hover:w-4'
+                    ? 'bg-primary w-8' 
+                    : 'bg-gray-200 w-1.5 hover:w-4'
                 }`}
               />
             ))}

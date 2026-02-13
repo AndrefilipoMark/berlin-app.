@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
 @theme {
+  --color-primary: #0057B7;
+  --color-accent: #fbbf24;
   --color-azure-blue: #0057B7;
-  --color-vibrant-yellow: #FFD700;
-  --color-soft-sand: #F5F5F7;
+  --color-vibrant-yellow: #fbbf24;
+  --color-soft-sand: #f8fafc;
   --font-family-sans: 'Inter', sans-serif;
   --radius-3xl: 24px;
 }
@@ -18,6 +20,7 @@
     font-family: var(--font-family-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: #111827;
   }
 }
 
@@ -43,38 +46,6 @@
   }
 }
 
-@keyframes heartbeat {
-  0%, 100% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(1.08);
-  }
-  50% {
-    transform: scale(1);
-  }
-  75% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes breathing {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
-}
-
 .animate-gentle-pulse {
   animation: gentle-pulse 2s ease-in-out infinite;
-}
-
-.animate-heartbeat {
-  animation: heartbeat 2s ease-in-out infinite;
-}
-
-.animate-breathing {
-  animation: breathing 3s ease-in-out infinite;
 }

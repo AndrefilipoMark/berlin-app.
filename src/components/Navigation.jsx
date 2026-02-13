@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Briefcase, Building2, MessageCircle, MessageSquare, Sparkles, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
+import { Home, Briefcase, Building2, MessageCircle, MessageSquare, BookOpen, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase, updateLastSeen, getFriendRequests, getUnreadMessagesCount, ensureProfile } from '../lib/supabase';
@@ -14,12 +14,12 @@ const ADMIN_EMAILS = [
 ];
 
 const navItems = [
-  { path: '/', label: 'Головна', icon: Home, color: 'azure-blue' },
-  { path: '/jobs', label: 'Вакансії', icon: Briefcase, color: 'azure-blue' },
-  { path: '/housing', label: 'Житло', icon: Building2, color: 'vibrant-yellow' },
-  { path: '/services', label: 'Послуги', icon: Sparkles, color: 'teal' },
-  { path: '/forum', label: 'Форум', icon: MessageCircle, color: 'green' },
-  { path: '/chat', label: 'Чат', icon: MessageSquare, color: 'azure-blue' },
+  { path: '/', label: 'Головна', icon: Home, color: 'primary' },
+  { path: '/jobs', label: 'Вакансії', icon: Briefcase, color: 'primary' },
+  { path: '/housing', label: 'Житло', icon: Building2, color: 'primary' },
+  { path: '/services', label: 'Послуги', icon: BookOpen, color: 'primary' },
+  { path: '/forum', label: 'Форум', icon: MessageCircle, color: 'primary' },
+  { path: '/chat', label: 'Чат', icon: MessageSquare, color: 'primary' },
 ];
 
 export default function Navigation() {
@@ -264,28 +264,20 @@ export default function Navigation() {
   // Color mapping for active tab indicator and icon color
   const getActiveColor = (color, type = 'bg') => {
     const colorMap = {
+      'primary': {
+        bg: 'bg-primary',
+        text: 'text-primary'
+      },
       'azure-blue': {
-        bg: 'bg-azure-blue',
-        text: 'text-azure-blue'
+        bg: 'bg-primary',
+        text: 'text-primary'
       },
       'vibrant-yellow': {
-        bg: 'bg-vibrant-yellow',
-        text: 'text-vibrant-yellow'
-      },
-      'purple': {
-        bg: 'bg-purple-500',
-        text: 'text-purple-500'
-      },
-      'teal': {
-        bg: 'bg-teal-600',
-        text: 'text-teal-600'
-      },
-      'green': {
-        bg: 'bg-green-500',
-        text: 'text-green-500'
+        bg: 'bg-accent',
+        text: 'text-accent'
       }
     };
-    const colors = colorMap[color] || colorMap['azure-blue'];
+    const colors = colorMap[color] || colorMap['primary'];
     return colors[type];
   };
 
@@ -299,7 +291,7 @@ export default function Navigation() {
       <div className="max-w-[1600px] mx-auto px-3 md:px-6">
         <div className="h-14 md:h-16 flex items-center justify-between gap-2 md:gap-4">
           {/* Navigation Links - Centered with horizontal scroll on mobile */}
-          <div className="flex items-center gap-1.5 md:gap-3 lg:gap-4 flex-1 justify-center overflow-x-auto scrollbar-hide px-2">
+          <div className="flex items-center gap-1.5 md:gap-3 lg:gap-4 flex-1 justify-start md:justify-center overflow-x-auto scrollbar-hide px-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               // Improved active state detection for sub-routes
@@ -362,8 +354,8 @@ export default function Navigation() {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 rounded-lg md:rounded-xl cursor-pointer transition-all"
                 >
-                  <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-vibrant-yellow to-orange-400 rounded-full flex items-center justify-center shadow-md">
-                    <span className="text-white font-bold text-xs md:text-sm">
+                  <div className="w-7 h-7 md:w-9 md:h-9 bg-primary/10 rounded-full flex items-center justify-center shadow-sm border border-primary/10">
+                    <span className="text-primary font-bold text-xs md:text-sm">
                       {getUserInitial()}
                     </span>
                   </div>
@@ -388,23 +380,22 @@ export default function Navigation() {
                       className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100/50 overflow-hidden z-50 backdrop-blur-sm"
                     >
                       {/* Ukrainian Flag Gradient Header */}
-                      <div className="relative bg-gradient-to-r from-azure-blue via-azure-blue to-vibrant-yellow p-3 pb-4">
-                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-azure-blue via-vibrant-yellow to-azure-blue"></div>
+                      <div className="relative bg-white p-3 pb-4 border-b border-gray-100">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border-2 border-white/30 shadow-md">
-                            <span className="text-white font-bold text-base">
+                          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
+                            <span className="text-primary font-bold text-base">
                               {getUserInitial()}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-extrabold text-white truncate drop-shadow-sm">
+                            <p className="text-xs font-extrabold text-gray-900 truncate">
                               {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
                             </p>
-                            <p className="text-[10px] text-white/90 truncate mt-0.5">
+                            <p className="text-[10px] text-gray-500 truncate mt-0.5">
                               {user.email}
                             </p>
                             {isAdmin && (
-                              <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-[9px] font-bold rounded-full border border-white/30">
+                              <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded-full border border-primary/20">
                                 <Shield size={8} />
                                 АДМІН
                               </span>
@@ -418,14 +409,14 @@ export default function Navigation() {
                         <Link
                           to={`/profile/${user.id}`}
                           onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 relative"
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative"
                         >
-                          <div className="w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
-                            <User size={16} className="text-azure-blue" strokeWidth={2} />
+                          <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                            <User size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
                           </div>
                           <span className="flex-1">Моя сторінка</span>
                           {friendRequestsCount > 0 && (
-                            <span className="px-1.5 py-0.5 bg-vibrant-yellow text-gray-900 text-[10px] font-bold rounded-full shadow-sm">
+                            <span className="px-1.5 py-0.5 bg-accent text-gray-900 text-[10px] font-bold rounded-full shadow-sm">
                               {friendRequestsCount}
                             </span>
                           )}
@@ -434,10 +425,10 @@ export default function Navigation() {
                         <Link
                           to="/messages"
                           onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 relative mt-0.5"
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative mt-0.5"
                         >
-                          <div className="relative w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
-                            <MessageSquare size={16} className="text-azure-blue" strokeWidth={2} />
+                          <div className="relative w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                            <MessageSquare size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
                             {unreadMessagesCount > 0 && (
                               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
                                 <span className="text-white text-[8px] font-bold">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
@@ -450,10 +441,10 @@ export default function Navigation() {
                         <Link
                           to="/profile"
                           onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-azure-blue/5 hover:text-azure-blue rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
                         >
-                          <div className="w-8 h-8 bg-azure-blue/10 rounded-lg flex items-center justify-center group-hover:bg-azure-blue/20 transition-colors">
-                            <Settings size={16} className="text-azure-blue" strokeWidth={2} />
+                          <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                            <Settings size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
                           </div>
                           <span className="flex-1">Налаштування</span>
                         </Link>
@@ -462,10 +453,10 @@ export default function Navigation() {
                           <Link
                             to="/admin"
                             onClick={() => setShowUserMenu(false)}
-                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-vibrant-yellow hover:bg-vibrant-yellow/10 rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-accent hover:bg-accent/10 rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
                           >
-                            <div className="w-8 h-8 bg-vibrant-yellow/20 rounded-lg flex items-center justify-center group-hover:bg-vibrant-yellow/30 transition-colors">
-                              <Shield size={16} className="text-vibrant-yellow" strokeWidth={2} />
+                            <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center group-hover:bg-accent/30 transition-colors">
+                              <Shield size={16} className="text-accent" strokeWidth={2} />
                             </div>
                             <span className="flex-1">Адмін-панель</span>
                           </Link>
@@ -492,11 +483,11 @@ export default function Navigation() {
                       </div>
 
                       {/* Ukrainian Flag Footer */}
-                      <div className="px-3 py-1.5 bg-gradient-to-r from-azure-blue/5 via-vibrant-yellow/5 to-azure-blue/5 border-t border-gray-100">
+                      <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-100">
                         <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
                           <Heart size={10} className="text-red-500 fill-red-500" />
                           <span>Наш дім Берлін</span>
-                          <span className="text-azure-blue">🇺🇦</span>
+                          <span className="text-primary">🇺🇦</span>
                         </div>
                       </div>
                     </motion.div>
@@ -516,7 +507,7 @@ export default function Navigation() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-azure-blue text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm shadow-lg hover:shadow-xl transition-all"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-primary text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm shadow-sm hover:shadow-md hover:bg-blue-800 transition-all"
               >
                 <LogIn size={16} className="md:w-5 md:h-5" strokeWidth={2.5} />
                 <span className="hidden sm:inline">Увійти</span>

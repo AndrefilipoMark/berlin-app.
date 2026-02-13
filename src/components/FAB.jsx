@@ -23,15 +23,15 @@ export default function FAB() {
   const getFabConfig = () => {
     switch (location.pathname) {
       case '/jobs':
-        return { show: true, action: 'job', icon: Briefcase, color: 'from-azure-blue to-blue-600' };
+        return { show: true, action: 'job', icon: Briefcase, color: 'bg-primary' };
       case '/housing':
-        return { show: true, action: 'housing', icon: Home, color: 'from-vibrant-yellow to-amber-500' };
+        return { show: true, action: 'housing', icon: Home, color: 'bg-primary' };
       case '/services':
-        return { show: true, action: 'service', icon: Sparkles, color: 'from-teal-500 to-teal-600' };
+        return { show: true, action: 'service', icon: Sparkles, color: 'bg-primary' };
       case '/forum':
-        return { show: true, action: 'forum', icon: MessageCircle, color: 'from-green-500 to-emerald-600' };
+        return { show: true, action: 'forum', icon: MessageCircle, color: 'bg-primary' };
       default:
-        return { show: false, action: null, icon: Plus, color: 'from-azure-blue to-blue-600' };
+        return { show: false, action: null, icon: Plus, color: 'bg-primary' };
     }
   };
 
@@ -92,7 +92,7 @@ export default function FAB() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={handleClick}
-        className={`w-16 h-16 bg-gradient-to-br ${color} rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-2xl transition-all group`}
+        className={`w-16 h-16 ${color} rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-2xl transition-all group`}
       >
         <Icon size={28} className="text-white transition-transform group-hover:scale-110" strokeWidth={3} />
       </motion.button>

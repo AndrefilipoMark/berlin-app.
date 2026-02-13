@@ -21,7 +21,7 @@ export default function HousingCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => navigate(`/housing/${item.id}`)}
-      className="bg-white rounded-3xl p-0 overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] border-2 border-gray-300 hover:border-amber-400 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01]"
+      className="bg-white rounded-3xl p-0 overflow-hidden shadow-sm hover:shadow-md border border-gray-200 hover:border-primary/50 transition-all duration-300 cursor-pointer group flex flex-col h-full hover:scale-[1.01]"
     >
       {Array.isArray(item.images) && item.images.length > 0 ? (
         <div className="aspect-[16/10] w-full flex-shrink-0 overflow-hidden rounded-t-3xl bg-gray-100">
@@ -35,11 +35,11 @@ export default function HousingCard({
       <div className="p-5 md:p-6 flex flex-col flex-1">
       {/* Header: Title + Category */}
       <div className="flex justify-between items-start gap-3 mb-3">
-        <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-amber-600 transition-colors">
+        <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-primary transition-colors">
           {item.title}
         </h3>
-        <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 bg-amber-50 text-amber-600 text-xs font-semibold rounded-xl border border-amber-100">
-          {TypeIcon && <TypeIcon size={13} className="text-amber-500" />}
+        <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-xl border border-gray-200">
+          {TypeIcon && <TypeIcon size={13} className="text-primary" />}
           <span className="hidden sm:inline">{categoryLabel || '—'}</span>
         </span>
       </div>
@@ -47,8 +47,8 @@ export default function HousingCard({
       <div className="space-y-3 flex-1">
         {/* Price Badge - Prominent */}
         {item.price != null && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-sm font-bold border border-amber-100">
-            <Euro size={16} className="text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 text-primary rounded-xl text-sm font-bold border border-primary/10">
+            <Euro size={16} className="text-primary" />
             <span>від €{item.price}</span>
           </div>
         )}
@@ -56,7 +56,7 @@ export default function HousingCard({
         {/* Location with colored icon */}
         {(item.district || item.address) && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin size={16} className="text-amber-500 flex-shrink-0" />
+            <MapPin size={16} className="text-primary/70 flex-shrink-0" />
             <span className="line-clamp-1">{item.district || item.address?.split(',')[0] || item.address}</span>
           </div>
         )}
@@ -86,26 +86,26 @@ export default function HousingCard({
                   e.stopPropagation();
                   onAuthorClick?.(item.user_id);
                 }}
-                className="flex items-center gap-2 min-w-0 group/author text-left hover:bg-amber-50/50 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
+                className="flex items-center gap-2 min-w-0 group/author text-left hover:bg-primary/5 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
               >
                 {profile?.avatar_url ? (
                   <img
                     src={profile.avatar_url}
                     alt=""
-                    className="w-7 h-7 rounded-full object-cover flex-shrink-0 border-2 border-amber-100 group-hover/author:border-amber-300 transition-colors"
+                    className="w-7 h-7 rounded-full object-cover flex-shrink-0 border-2 border-primary/10 group-hover/author:border-primary/30 transition-colors"
                   />
                 ) : (
-                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-vibrant-yellow to-amber-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
+                  <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-xs font-bold shadow-sm">
                     {(authorName || 'К').charAt(0).toUpperCase()}
                   </span>
                 )}
-                <span className="truncate font-medium text-gray-700 group-hover/author:text-amber-600 transition-colors">
+                <span className="truncate font-medium text-gray-700 group-hover/author:text-primary transition-colors">
                   {authorName}
                 </span>
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500 text-xs font-bold">
+                <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-500 text-xs font-bold">
                   {(authorName || 'К').charAt(0).toUpperCase()}
                 </span>
                 <span className="truncate text-gray-600">{authorName}</span>

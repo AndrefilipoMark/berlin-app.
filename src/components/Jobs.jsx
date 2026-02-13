@@ -68,15 +68,15 @@ export default function Jobs() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
       whileHover={{ y: -4 }}
-      className="relative bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:-translate-y-1 transition-all duration-300 h-full overflow-hidden"
+      className="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300 h-full overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-azure-blue/5 via-white to-white opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
       
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-azure-blue/10 text-azure-blue border border-azure-blue/20 rounded-2xl flex items-center justify-center shadow-sm">
-              <Briefcase size={22} className="text-azure-blue animate-heartbeat" strokeWidth={2} />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-primary/10 text-primary border border-primary/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Briefcase size={22} className="text-primary animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-gray-900">Вакансії</h2>
@@ -87,15 +87,15 @@ export default function Jobs() {
           </div>
           <div className="flex items-center gap-2">
             {jobs.length > 0 && (
-              <div className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                Нові вакансії
+              <div className="text-[10px] font-bold text-gray-900 bg-accent px-2.5 py-1 rounded-full border border-yellow-400/50 shadow-sm uppercase tracking-wide">
+                Нові
               </div>
             )}
             <motion.div
               animate={{ rotate: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <TrendingUp size={18} className="text-azure-blue" />
+              <TrendingUp size={18} className="text-primary" />
             </motion.div>
           </div>
         </div>
@@ -126,14 +126,14 @@ export default function Jobs() {
                 transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                 whileHover={{ x: -3 }}
                 onClick={() => navigate(`/jobs/${job.id}`)}
-                className="p-3 rounded-xl bg-gradient-to-br from-gray-50/50 to-white border-2 border-gray-300 hover:border-blue-400 transition-all cursor-pointer group"
+                className="p-3 rounded-xl bg-white border border-gray-200 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex justify-between items-start gap-2 mb-1.5">
-                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-azure-blue transition-colors flex-1 line-clamp-1">
+                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-primary transition-colors flex-1 line-clamp-1">
                     {job.title}
                   </h3>
                   {job.category && (
-                    <span className="flex-shrink-0 px-1.5 py-0.5 bg-blue-50 text-azure-blue text-[10px] font-semibold rounded border border-blue-100">
+                    <span className="flex-shrink-0 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-semibold rounded border border-gray-200">
                       {job.category}
                     </span>
                   )}
@@ -144,17 +144,17 @@ export default function Jobs() {
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <div className="flex items-center gap-2 text-gray-500 flex-wrap">
                     <span className="flex items-center gap-1">
-                      <MapPin size={11} className="text-azure-blue flex-shrink-0" />
+                      <MapPin size={11} className="text-primary/70 flex-shrink-0" />
                       {job.location?.split(',')[0] || job.location || '—'}
                     </span>
                     {job.employment_type && (
                       <span className="flex items-center gap-1">
-                        <Clock size={11} className="text-azure-blue flex-shrink-0" />
+                        <Clock size={11} className="text-primary/70 flex-shrink-0" />
                         {getEmploymentLabel(job.employment_type)}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 font-bold text-azure-blue flex-shrink-0">
+                  <div className="flex items-center gap-1 font-bold text-primary flex-shrink-0">
                     <Euro size={11} />
                     {formatSalary(job.salary_min, job.salary_max)}
                   </div>
@@ -177,7 +177,7 @@ export default function Jobs() {
             navigate('/jobs');
           }}
           disabled={loading}
-          className="w-full py-2.5 bg-gradient-to-r from-azure-blue to-azure-blue/80 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-accent text-gray-900 text-sm font-bold rounded-xl hover:bg-yellow-500 hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

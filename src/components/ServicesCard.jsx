@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles, TrendingUp, MapPin, Loader2 } from 'lucide-react';
+import { BookOpen, TrendingUp, MapPin, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getServices } from '../lib/supabase';
@@ -61,16 +61,16 @@ export default function ServicesCard() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="relative bg-white rounded-3xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-xl border border-gray-100 transition-all duration-300 h-full overflow-hidden"
+      className="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300 h-full overflow-hidden"
     >
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-teal-500/10 text-teal-600 border border-teal-500/20 rounded-2xl flex items-center justify-center shadow-sm">
-              <Sparkles size={22} className="text-teal-600 animate-heartbeat" strokeWidth={2} />
+            <div className="w-12 h-12 aspect-square flex-shrink-0 bg-primary/10 text-primary border border-primary/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <BookOpen size={22} className="text-primary animate-heartbeat" strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-gray-900">Корисні контакти та сервіси</h2>
+              <h2 className="text-xl font-extrabold text-gray-900">Корисні контакти та послуги</h2>
               <p className="text-xs text-gray-500">
                 {loading ? 'Завантаження...' : `${totalCount} ${totalCount === 1 ? 'сервіс' : totalCount < 5 ? 'сервіси' : 'сервісів'}`}
               </p>
@@ -78,15 +78,15 @@ export default function ServicesCard() {
           </div>
           <div className="flex items-center gap-2">
             {services.length > 0 && (
-              <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-1 rounded-full">
-                Нові послуги
+              <div className="text-[10px] font-bold text-gray-900 bg-accent px-2.5 py-1 rounded-full border border-yellow-400/50 shadow-sm uppercase tracking-wide">
+                Нові
               </div>
             )}
             <motion.div
               animate={{ rotate: [0, 10, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <TrendingUp size={18} className="text-teal-600" />
+              <TrendingUp size={18} className="text-primary" />
             </motion.div>
           </div>
         </div>
@@ -112,20 +112,20 @@ export default function ServicesCard() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
                 onClick={() => navigate(`/services/${service.id}`)}
-                className="p-4 rounded-2xl bg-white border-2 border-gray-300 hover:border-teal-400 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-[1.01] overflow-hidden"
+                className="p-4 rounded-2xl bg-white border border-gray-200 hover:border-primary/50 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group hover:scale-[1.01] overflow-hidden"
               >
                 <div className="flex justify-between items-start gap-3 mb-1.5">
-                  <h3 className="text-sm font-extrabold text-gray-900 max-w-[70%] line-clamp-2 group-hover:text-teal-600 transition-colors">
+                  <h3 className="text-sm font-extrabold text-gray-900 max-w-[70%] line-clamp-2 group-hover:text-primary transition-colors">
                     {service.name}
                   </h3>
-                  <span className="flex-shrink-0 px-2 py-1 bg-teal-50 text-teal-600 text-[10px] font-semibold rounded border border-teal-100">
+                  <span className="flex-shrink-0 px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-semibold rounded border border-gray-200">
                     {getCategoryLabel(service.category)}
                   </span>
                 </div>
                 <div className="space-y-1.5">
                   {service.address && (
                     <div className="flex items-center gap-1.5 text-gray-600 text-xs mb-0.5">
-                      <MapPin size={12} className="text-gray-400 flex-shrink-0" />
+                      <MapPin size={12} className="text-primary/70 flex-shrink-0" />
                       <span className="line-clamp-1">{service.address.split(',')[0] || service.address}</span>
                     </div>
                   )}
@@ -141,7 +141,7 @@ export default function ServicesCard() {
                       {[...new Set(service.languages.slice(0, 4).map(normalizeLanguageCode))].map((code) => (
                         <span
                           key={code}
-                          className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-medium rounded"
+                          className="inline-flex items-center px-2 py-0.5 bg-white border border-gray-200 text-gray-500 text-[10px] font-medium rounded shadow-sm"
                         >
                           {code}
                         </span>
@@ -151,7 +151,7 @@ export default function ServicesCard() {
                   {service.district && (
                     <div className="flex justify-end ml-auto">
                       <span className="flex items-center gap-1 text-gray-700 text-[10px] font-semibold">
-                        <MapPin size={10} className="text-teal-500 flex-shrink-0" />
+                        <MapPin size={10} className="text-primary/70 flex-shrink-0" />
                         {service.district}
                       </span>
                     </div>
@@ -170,7 +170,7 @@ export default function ServicesCard() {
             navigate('/services');
           }}
           disabled={loading}
-          className="w-full py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-2.5 bg-accent text-gray-900 text-sm font-bold rounded-xl hover:bg-yellow-500 hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

@@ -150,6 +150,35 @@ export default function ForumPage() {
     }
   };
 
+  const triggerAutoReply = async (post, authorName) => {
+    // 1. Guess the bot based on post content
+    const content = (post.title + ' ' + post.content).toLowerCase();
+    
+    // 2. Wait 15-45 seconds (to look like reading)
+    const delay = 15000 + Math.random() * 30000;
+    setTimeout(async () => {
+      try {
+        await fetch('http://localhost:3000/api/chat/auto-reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            userId: post.user_id,
+            userName: authorName,
+            type: 'forum_reply',
+            postId: post.id
+          })
+        });
+        // Reload replies if current post is open
+        if (selectedPost?.id === post.id) {
+           loadReplies(post.id);
+        }
+      } catch (e) {
+        console.error('Forum auto-reply failed:', e);
+      }
+    }, delay);
+  };
+
   const handlePostClick = async (post) => {
     setSelectedPost(post);
     await loadReplies(post.id);
@@ -311,7 +340,7 @@ export default function ForumPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50/30 via-gray-50/50 to-emerald-50/30 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-gray-50/50 to-blue-50/30 p-4 md:p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Page Header */}
         <div className="mb-8 md:mb-10 text-center md:text-left">
@@ -344,7 +373,7 @@ export default function ForumPage() {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
                     isActive
-                      ? 'bg-green-600 text-white shadow-md shadow-green-600/20'
+                      ? 'bg-primary text-white shadow-md shadow-blue-600/20'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
                 >
@@ -371,7 +400,7 @@ export default function ForumPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedPost(null)}
-                      className="flex items-center gap-1.5 text-slate-500 hover:text-green-600 font-semibold text-sm"
+                      className="flex items-center gap-1.5 text-slate-500 hover:text-primary font-semibold text-sm"
                     >
                       <X size={18} />
                       Закрити
@@ -388,14 +417,14 @@ export default function ForumPage() {
                           setSelectedUserId(selectedPost.user_id);
                           setShowUserModal(true);
                         }}
-                        className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-green-300 transition-shadow cursor-pointer"
+                        className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 hover:ring-2 hover:ring-blue-300 transition-shadow cursor-pointer"
                       >
                         <span className="text-white font-bold text-sm">
                           {(selectedPost.profiles?.full_name || selectedPost.author_name || '?').charAt(0)}
                         </span>
                       </button>
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-sm">
                           {(selectedPost.profiles?.full_name || selectedPost.author_name || '?').charAt(0)}
                         </span>
@@ -414,7 +443,7 @@ export default function ForumPage() {
                               setSelectedUserId(selectedPost.user_id);
                               setShowUserModal(true);
                             }}
-                            className="text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                            className="text-primary hover:text-blue-700 hover:underline cursor-pointer"
                           >
                             {selectedPost.profiles?.full_name || selectedPost.author_name || 'Анонім'}
                           </button>
@@ -447,7 +476,7 @@ export default function ForumPage() {
                       <button
                         type="button"
                         onClick={() => openEditPost(selectedPost)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-xl hover:bg-green-500/20 font-semibold text-xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 font-semibold text-xs"
                       >
                         <Edit2 size={14} />
                         Редагувати
@@ -485,14 +514,14 @@ export default function ForumPage() {
                 <h2 className="text-xl font-extrabold text-slate-900 mb-3">
                   {selectedPost.title}
                 </h2>
-                <div className="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border-l-4 border-green-500">
+                <div className="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed border-l-4 border-primary">
                   {selectedPost.content}
                 </div>
               </div>
 
               <div className="p-6 max-h-[320px] overflow-y-auto border-b border-slate-100">
                 <h4 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
-                  <MessageSquare size={18} className="text-green-500" />
+                  <MessageSquare size={18} className="text-primary" />
                   Коментарі ({replies.length})
                 </h4>
                 {replies.length === 0 ? (
@@ -541,7 +570,7 @@ export default function ForumPage() {
                                         setSelectedUserId(reply.user_id);
                                         setShowUserModal(true);
                                       }}
-                                      className="text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                                      className="text-primary hover:text-blue-700 hover:underline cursor-pointer"
                                     >
                                       {replyAuthor}
                                     </button>
@@ -601,12 +630,12 @@ export default function ForumPage() {
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendReply()}
-                      className="flex-1 px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:border-green-500"
+                      className="flex-1 px-4 py-2.5 bg-white rounded-xl border border-slate-200 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:border-primary"
                     />
                     <button
                       onClick={handleSendReply}
                       disabled={submittingReply || !replyText.trim()}
-                      className="p-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all disabled:opacity-50"
+                      className="p-2.5 bg-primary text-white rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50"
                     >
                       {submittingReply ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                     </button>
@@ -622,7 +651,7 @@ export default function ForumPage() {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[24px] shadow-md border border-slate-100">
-              <Loader2 size={48} className="text-green-500 animate-spin mb-4" />
+              <Loader2 size={48} className="text-primary animate-spin mb-4" />
               <p className="text-slate-500 font-medium italic">Завантажуємо обговорення...</p>
             </div>
           ) : filteredPosts.length === 0 ? (
@@ -701,7 +730,7 @@ export default function ForumPage() {
                 <input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="Заголовок"
                 />
               </div>
@@ -711,7 +740,7 @@ export default function ForumPage() {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary resize-none"
                   placeholder="Зміст"
                 />
               </div>
@@ -720,7 +749,7 @@ export default function ForumPage() {
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   {FORUM_CATEGORIES.filter((c) => c.id).map((c) => (
                     <option key={c.id} value={c.id}>{c.label}</option>
@@ -740,7 +769,7 @@ export default function ForumPage() {
                 type="button"
                 onClick={handleUpdatePost}
                 disabled={submittingEdit || !editTitle.trim() || !editContent.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
               >
                 {submittingEdit ? 'Збереження…' : 'Зберегти'}
               </button>

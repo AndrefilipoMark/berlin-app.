@@ -5,18 +5,18 @@ import { getDistrictsStats } from '../lib/supabase';
 
 // Унікальні іконки та стилі для кожного з 12 районів Берліна
 const DISTRICT_CONFIG = {
-  'Mitte': { emoji: '🏛️', bgColor: 'bg-blue-100', iconColor: 'text-blue-600', hoverColor: 'hover:bg-blue-50' },
-  'Friedrichshain-Kreuzberg': { emoji: '🎨', bgColor: 'bg-purple-100', iconColor: 'text-purple-600', hoverColor: 'hover:bg-purple-50' },
-  'Pankow': { emoji: '🌳', bgColor: 'bg-green-100', iconColor: 'text-green-600', hoverColor: 'hover:bg-green-50' },
-  'Charlottenburg-Wilmersdorf': { emoji: '👑', bgColor: 'bg-yellow-100', iconColor: 'text-yellow-600', hoverColor: 'hover:bg-yellow-50' },
-  'Spandau': { emoji: '🏰', bgColor: 'bg-orange-100', iconColor: 'text-orange-600', hoverColor: 'hover:bg-orange-50' },
-  'Steglitz-Zehlendorf': { emoji: '🎭', bgColor: 'bg-pink-100', iconColor: 'text-pink-600', hoverColor: 'hover:bg-pink-50' },
-  'Tempelhof-Schöneberg': { emoji: '✈️', bgColor: 'bg-cyan-100', iconColor: 'text-cyan-600', hoverColor: 'hover:bg-cyan-50' },
-  'Neukölln': { emoji: '🌆', bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600', hoverColor: 'hover:bg-indigo-50' },
-  'Treptow-Köpenick': { emoji: '🌊', bgColor: 'bg-teal-100', iconColor: 'text-teal-600', hoverColor: 'hover:bg-teal-50' },
-  'Marzahn-Hellersdorf': { emoji: '🏘️', bgColor: 'bg-red-100', iconColor: 'text-red-600', hoverColor: 'hover:bg-red-50' },
-  'Lichtenberg': { emoji: '🏭', bgColor: 'bg-gray-100', iconColor: 'text-gray-600', hoverColor: 'hover:bg-gray-50' },
-  'Reinickendorf': { emoji: '🌲', bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600', hoverColor: 'hover:bg-emerald-50' },
+  'Mitte': { emoji: '🏛️', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Friedrichshain-Kreuzberg': { emoji: '🎨', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Pankow': { emoji: '🌳', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Charlottenburg-Wilmersdorf': { emoji: '👑', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Spandau': { emoji: '🏰', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Steglitz-Zehlendorf': { emoji: '🎭', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Tempelhof-Schöneberg': { emoji: '✈️', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Neukölln': { emoji: '🌆', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Treptow-Köpenick': { emoji: '🌊', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Marzahn-Hellersdorf': { emoji: '🏘️', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Lichtenberg': { emoji: '🏭', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
+  'Reinickendorf': { emoji: '🌲', bgColor: 'bg-white', iconColor: 'text-primary', hoverColor: 'hover:border-primary/50' },
 };
 
 export default function Districts() {
@@ -43,11 +43,11 @@ export default function Districts() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.6 }}
       whileHover={{ y: -4 }}
-      className="relative bg-white/80 backdrop-blur-lg rounded-3xl p-5 md:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 hover:-translate-y-1 transition-all duration-300"
+      className="relative bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-gray-100 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
     >
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 bg-azure-blue/10 rounded-2xl flex items-center justify-center">
-          <MapPin size={18} className="text-azure-blue" strokeWidth={2.5} />
+        <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
+          <MapPin size={18} className="text-primary" strokeWidth={2.5} />
         </div>
         <div>
           <h2 className="text-lg font-extrabold text-gray-900">Райони Берліна</h2>
@@ -57,7 +57,7 @@ export default function Districts() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 size={28} className="text-azure-blue animate-spin" />
+          <Loader2 size={28} className="text-primary animate-spin" />
         </div>
       ) : districts.length === 0 ? (
         <p className="text-sm text-gray-500 py-6 text-center">
@@ -68,9 +68,9 @@ export default function Districts() {
           {districts.map((district, index) => {
             const config = DISTRICT_CONFIG[district.name] || {
               emoji: '📍',
-              bgColor: 'bg-gray-100',
+              bgColor: 'bg-white',
               iconColor: 'text-gray-600',
-              hoverColor: 'hover:bg-gray-50'
+              hoverColor: 'hover:border-gray-300'
             };
             
             return (
@@ -80,7 +80,7 @@ export default function Districts() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.7 + index * 0.03 }}
                 whileHover={{ y: -2, scale: 1.02 }}
-                className={`${config.bgColor} rounded-2xl p-4 border border-gray-200 hover:border-gray-300 ${config.hoverColor} transition-all duration-300 cursor-pointer group`}
+                className={`${config.bgColor} rounded-2xl p-4 border border-gray-100 ${config.hoverColor} transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-md`}
               >
                 <motion.div
                   whileHover={{ scale: 1.2, rotate: 5 }}
@@ -89,7 +89,7 @@ export default function Districts() {
                 >
                   {config.emoji}
                 </motion.div>
-                <h3 className="text-sm font-bold text-gray-900 mb-3 group-hover:text-gray-800 transition-colors">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors">
                   {district.name}
                 </h3>
                 <div className="space-y-2">

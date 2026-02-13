@@ -29,6 +29,7 @@ export default function ChatPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [typingBot, setTypingBot] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const channelRef = useRef(null);
@@ -37,6 +38,20 @@ export default function ChatPage() {
   const realtimeRetryCountRef = useRef(0);
   const mountedRef = useRef(true);
   const isInitialLoadRef = useRef(true);
+
+  // Боти завжди онлайн
+  const STATIC_BOTS = [
+    {
+      user_id: '00000000-0000-0000-0000-000000000001',
+      full_name: 'Андрій Ші 🤖',
+      avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200'
+    },
+    {
+      user_id: '00000000-0000-0000-0000-000000000002',
+      full_name: 'Танюша Ші 🌸',
+      avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&h=200'
+    }
+  ];
 
   useEffect(() => {
     mountedRef.current = true;
@@ -86,6 +101,27 @@ export default function ChatPage() {
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    // Встановлюємо початкових ботів як онлайн
+    setOnlineUsers(STATIC_BOTS);
+    setOnlineCount(STATIC_BOTS.length);
+  }, []);
+
+  const updateOnlineUsers = (realtimeUsers) => {
+    // Об'єднуємо реальних користувачів і статичних ботів
+    const allUsers = [...realtimeUsers];
+    
+    // Додаємо ботів, якщо їх немає в списку
+    STATIC_BOTS.forEach(bot => {
+      if (!allUsers.some(u => u.user_id === bot.user_id)) {
+        allUsers.push(bot);
+      }
+    });
+
+    setOnlineUsers(allUsers);
+    setOnlineCount(allUsers.length);
+  };
 
   // Real-time підписка тільки для авторизованих; обмеження ретраїв
   useEffect(() => {
@@ -365,23 +401,20 @@ export default function ChatPage() {
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         const users = Object.values(state).flat();
-        setOnlineUsers(users);
-        setOnlineCount(users.length);
+        updateOnlineUsers(users);
         console.log('👥 Online users:', users.length, users);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         console.log('👋 User joined:', key);
         const state = channel.presenceState();
         const users = Object.values(state).flat();
-        setOnlineUsers(users);
-        setOnlineCount(users.length);
+        updateOnlineUsers(users);
       })
       .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
         console.log('👋 User left:', key);
         const state = channel.presenceState();
         const users = Object.values(state).flat();
-        setOnlineUsers(users);
-        setOnlineCount(users.length);
+        updateOnlineUsers(users);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -415,6 +448,56 @@ export default function ChatPage() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const triggerAutoReply = async (message, authorName) => {
+    const BOT_CONFIG = {
+      ANDRIY: {
+        name: 'Андрій Ші 🤖',
+        keywords: ['машина', 'авто', 'робота', 'дозвіл', 'документи', 'ремонт', 'техніка', 'айті', 'it', 'комп', 'драйвер', 'права']
+      },
+      TANYUSHA: {
+        name: 'Танюша Ші 🌸',
+        keywords: ['дитина', 'діти', 'лікар', 'школа', 'садок', 'сумно', 'депресія', 'порадьте', 'краса', 'манікюр', 'кафе', 'ресторан', 'їжа', 'ліки']
+      }
+    };
+
+    // 1. Guess the bot
+    const lowerMsg = message.toLowerCase();
+    const isAndriy = BOT_CONFIG.ANDRIY.keywords.some(k => lowerMsg.includes(k));
+    const isTanyusha = BOT_CONFIG.TANYUSHA.keywords.some(k => lowerMsg.includes(k));
+    
+    let botName = 'AI';
+    if (lowerMsg.includes('андрій') || lowerMsg.includes('andriy')) botName = BOT_CONFIG.ANDRIY.name;
+    else if (lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha')) botName = BOT_CONFIG.TANYUSHA.name;
+    else if (isAndriy && !isTanyusha) botName = BOT_CONFIG.ANDRIY.name;
+    else if (isTanyusha && !isAndriy) botName = BOT_CONFIG.TANYUSHA.name;
+    else botName = Math.random() > 0.5 ? BOT_CONFIG.ANDRIY.name : BOT_CONFIG.TANYUSHA.name;
+
+    // 2. Show typing indicator
+    setTypingBot(botName);
+
+    // 3. Wait 3-6 seconds (random)
+    const delay = 3000 + Math.random() * 3000;
+    await new Promise(r => setTimeout(r, delay));
+
+    // 4. Call API
+    try {
+      await fetch('/api/chat/auto-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          userId: user.id,
+          userName: authorName,
+          type: 'chat'
+        })
+      });
+    } catch (e) {
+      console.error('Auto-reply failed:', e);
+    } finally {
+      setTypingBot(null);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -493,6 +576,9 @@ export default function ChatPage() {
             : msg
         )
       );
+
+      // Trigger Auto Reply (fire and forget)
+      triggerAutoReply(messageContent, authorName);
       
     } catch (error) {
       console.error('❌ ERROR SENDING MESSAGE:');
@@ -918,6 +1004,23 @@ export default function ChatPage() {
               >
                 <span className="text-lg">✖️</span>
               </button>
+            </motion.div>
+          )}
+
+          {/* Typing Indicator */}
+          {typingBot && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mb-2 ml-4 flex items-center gap-2"
+            >
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+              </div>
+              <span className="text-xs text-gray-500 font-medium">{typingBot} пише...</span>
             </motion.div>
           )}
 

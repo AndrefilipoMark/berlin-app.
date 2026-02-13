@@ -231,7 +231,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="min-h-screen bg-gradient-to-br from-soft-sand via-gray-50 to-blue-50/30">
+      <div className="min-h-screen bg-soft-sand text-gray-900">
         {/* Navigation Bar */}
         <Navigation />
 

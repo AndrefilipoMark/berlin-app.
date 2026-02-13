@@ -703,7 +703,7 @@ export default function AdminPage() {
                     <div className="bg-red-500/10 rounded-2xl p-4 border border-red-500/20">
                       <h3 className="text-sm font-semibold text-red-300 mb-2">Запит на видалення акаунту</h3>
                       <p className="text-gray-300 text-sm mb-3">
-                        Адміністратор має видалити цей акаунт вручну в Supabase Dashboard (Authentication -> Users).
+                        Адміністратор має видалити цей акаунт вручну в Supabase Dashboard (Authentication -&gt; Users).
                       </p>
                       <div className="bg-black/30 p-3 rounded-lg font-mono text-xs text-blue-200 break-all mb-3">
                         Email: {selectedMessage.user_email || 'не вказано'}<br/>

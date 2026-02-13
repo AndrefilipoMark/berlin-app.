@@ -197,7 +197,7 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50/30 via-gray-50/50 to-cyan-50/30 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-gray-50/50 to-blue-50/30 p-4 md:p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Page Header */}
         <div className="mb-8 md:mb-10 text-center md:text-left">
@@ -233,7 +233,7 @@ export default function ServicesPage() {
                   }}
                   className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
                     isActive
-                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
+                      ? 'bg-primary text-white shadow-md shadow-blue-600/20'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
                 >
@@ -264,11 +264,11 @@ export default function ServicesPage() {
                         onClick={() => setSelectedSubcategory(sub.id)}
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
                           isSubActive
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-teal-100 hover:border-teal-200 hover:bg-teal-50/50'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-blue-100 hover:border-blue-200 hover:bg-blue-50/50'
                         }`}
                       >
-                        <SubIcon size={14} className={isSubActive ? 'text-white' : 'text-teal-500'} />
+                        <SubIcon size={14} className={isSubActive ? 'text-white' : 'text-primary'} />
                         {sub.label}
                       </button>
                     );
@@ -282,7 +282,7 @@ export default function ServicesPage() {
         {/* Content */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 size={48} className="text-teal-600 animate-spin mb-4" />
+            <Loader2 size={48} className="text-primary animate-spin mb-4" />
             <p className="text-slate-500 font-medium italic">Завантажуємо послуги...</p>
           </div>
         ) : filteredServices.length === 0 ? (
@@ -318,11 +318,11 @@ export default function ServicesPage() {
                 >
                   {/* Header: Name + Category */}
                   <div className="flex justify-between items-start gap-3 mb-3">
-                    <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-teal-600 transition-colors">
+                    <h3 className="text-lg md:text-xl font-extrabold text-gray-900 leading-tight flex-1 line-clamp-2 group-hover:text-primary transition-colors">
                       {service.name}
                     </h3>
-                    <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 bg-teal-50 text-teal-600 text-xs font-semibold rounded-xl border border-teal-100">
-                      <Icon size={13} className="text-teal-500" />
+                    <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 bg-blue-50 text-primary text-xs font-semibold rounded-xl border border-blue-100">
+                      <Icon size={13} className="text-primary" />
                       <span className="hidden sm:inline">{categoryLabel}</span>
                     </span>
                   </div>
@@ -330,7 +330,7 @@ export default function ServicesPage() {
                   <div className="space-y-3 flex-1">
                     {/* Profession Badge - if exists */}
                     {service.profession && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 text-teal-600 rounded-xl text-xs font-semibold border border-teal-100">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-primary rounded-xl text-xs font-semibold border border-blue-100">
                         <span>{service.profession}</span>
                       </div>
                     )}
@@ -338,7 +338,7 @@ export default function ServicesPage() {
                     {/* Location with colored icon */}
                     {service.address && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={16} className="text-teal-500 flex-shrink-0" />
+                        <MapPin size={16} className="text-primary flex-shrink-0" />
                         <span className="line-clamp-1">{service.address?.split(',')[0] || service.address}</span>
                       </div>
                     )}
@@ -358,20 +358,20 @@ export default function ServicesPage() {
                               setSelectedUserId(service.user_id);
                               setShowUserModal(true);
                             }}
-                            className="flex items-center gap-2 min-w-0 group/author text-left hover:bg-teal-50/50 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
+                            className="flex items-center gap-2 min-w-0 group/author text-left hover:bg-blue-50/50 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
                           >
                             {profile?.avatar_url ? (
                               <img
                                 src={profile.avatar_url}
                                 alt=""
-                                className="w-7 h-7 rounded-full object-cover flex-shrink-0 border-2 border-teal-100 group-hover/author:border-teal-300 transition-colors"
+                                className="w-7 h-7 rounded-full object-cover flex-shrink-0 border-2 border-blue-100 group-hover/author:border-blue-300 transition-colors"
                               />
                             ) : (
-                              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
+                              <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
                                 {(authorName || 'К').charAt(0).toUpperCase()}
                               </span>
                             )}
-                            <span className="truncate font-medium text-gray-700 group-hover/author:text-teal-600 transition-colors">
+                            <span className="truncate font-medium text-gray-700 group-hover/author:text-primary transition-colors">
                               {authorName}
                             </span>
                           </button>
