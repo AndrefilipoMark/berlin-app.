@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Home, Briefcase, Building2, MessageCircle, MessageSquare, BookOpen, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -31,6 +31,70 @@ export default function Navigation() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [friendRequestsCount, setFriendRequestsCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  const loadFriendRequests = async () => {
+    if (!user?.id) return;
+    try {
+      const requests = await getFriendRequests(user.id);
+      setFriendRequestsCount(requests.length);
+    } catch (error) {
+      console.error('Error loading friend requests:', error);
+    }
+  };
+
+  const loadUnreadMessagesCount = async () => {
+    if (!user?.id) return;
+    try {
+      const count = await getUnreadMessagesCount(user.id);
+      setUnreadMessagesCount(count);
+    } catch (error) {
+      console.error('Error loading unread messages count:', error);
+    }
+  };
+
+  const loadProfile = async (userId, retryCount = 0) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!error && data) {
+        setProfile(data);
+        return;
+      }
+      
+      // Якщо профілю немає, намагаємося створити його
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== userId) return;
+      
+      const { ok } = await ensureProfile({
+        id: user.id,
+        email: user.email ?? null,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Користувач',
+        gender: user.user_metadata?.gender || null,
+      });
+      
+      if (ok) {
+        // Невелика затримка для синхронізації бази даних
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const { data: next } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+        if (next) {
+          setProfile(next);
+        } else if (retryCount < 2) {
+          // Retry ще раз, якщо профіль ще не з'явився
+          setTimeout(() => loadProfile(userId, retryCount + 1), 500);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading profile:', e);
+      // Retry при помилці, якщо ще не перевищено ліміт
+      if (retryCount < 2) {
+        setTimeout(() => loadProfile(userId, retryCount + 1), 500);
+      }
+    }
+  };
 
   useEffect(() => {
     // Отримуємо поточного користувача
@@ -120,7 +184,16 @@ export default function Navigation() {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Successfully subscribed to unread messages updates');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Channel subscription error:', err);
+          console.warn('⚠️ Channel subscription error (will retry):', err || 'Unknown error');
+          // Retry subscription after a delay
+          setTimeout(() => {
+            if (channel) channel.subscribe();
+          }, 5000);
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⚠️ Channel subscription timed out (will retry)');
+          setTimeout(() => {
+            if (channel) channel.subscribe();
+          }, 5000);
         }
       });
 
@@ -145,70 +218,6 @@ export default function Navigation() {
       setUnreadMessagesCount(0);
     }
   }, [user?.id]);
-
-  const loadFriendRequests = async () => {
-    if (!user?.id) return;
-    try {
-      const requests = await getFriendRequests(user.id);
-      setFriendRequestsCount(requests.length);
-    } catch (error) {
-      console.error('Error loading friend requests:', error);
-    }
-  };
-
-  const loadUnreadMessagesCount = async () => {
-    if (!user?.id) return;
-    try {
-      const count = await getUnreadMessagesCount(user.id);
-      setUnreadMessagesCount(count);
-    } catch (error) {
-      console.error('Error loading unread messages count:', error);
-    }
-  };
-
-  const loadProfile = async (userId, retryCount = 0) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (!error && data) {
-        setProfile(data);
-        return;
-      }
-      
-      // Якщо профілю немає, намагаємося створити його
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.id !== userId) return;
-      
-      const { ok } = await ensureProfile({
-        id: user.id,
-        email: user.email ?? null,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Користувач',
-        gender: user.user_metadata?.gender || null,
-      });
-      
-      if (ok) {
-        // Невелика затримка для синхронізації бази даних
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const { data: next } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-        if (next) {
-          setProfile(next);
-        } else if (retryCount < 2) {
-          // Retry ще раз, якщо профіль ще не з'явився
-          setTimeout(() => loadProfile(userId, retryCount + 1), 500);
-        }
-      }
-    } catch (e) {
-      console.error('Error loading profile:', e);
-      // Retry при помилці, якщо ще не перевищено ліміт
-      if (retryCount < 2) {
-        setTimeout(() => loadProfile(userId, retryCount + 1), 500);
-      }
-    }
-  };
 
   const handleLogout = async () => {
     console.log('🚪 Logout initiated...');

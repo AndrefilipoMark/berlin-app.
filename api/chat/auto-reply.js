@@ -1,3 +1,4 @@
+/* global process */
 import { createClient } from '@supabase/supabase-js';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';

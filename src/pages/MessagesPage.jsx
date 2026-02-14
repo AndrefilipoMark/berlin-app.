@@ -656,9 +656,10 @@ export default function MessagesPage() {
     // Зупиняємо typing indicator перед відправкою
     handleStopTyping();
     
+    const messageToSend = messageText.trim();
+    
     try {
       setSending(true);
-      const messageToSend = messageText.trim();
       setMessageText(''); // Очищаємо поле одразу для кращого UX
       
       // Відправляємо повідомлення

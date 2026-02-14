@@ -1,7 +1,6 @@
-import { motion } from 'framer-motion';
-import { MessageSquare, Send, Loader2, Users, Lock, Trash2, MapPin } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Users, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { supabase, getMessages, sendMessage, deleteMessage } from '../lib/supabase';
 import GuestGuard from '../components/GuestGuard';
 import LoginModal from '../components/LoginModal';
@@ -11,7 +10,6 @@ import UserProfileModal from '../components/UserProfileModal';
 const ADMIN_EMAILS = ['andrefilipoua@gmail.com', 'test@example.com', 'admin@berlin-app.com'];
 
 export default function ChatPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -406,13 +404,13 @@ export default function ChatPage() {
         updateOnlineUsers(users);
         console.log('👥 Online users:', users.length, users);
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, ({ key }) => {
         console.log('👋 User joined:', key);
         const state = channel.presenceState();
         const users = Object.values(state).flat();
         updateOnlineUsers(users);
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ key }) => {
         console.log('👋 User left:', key);
         const state = channel.presenceState();
         const users = Object.values(state).flat();
