@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { MessageSquare, Send, Loader2, Users, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
