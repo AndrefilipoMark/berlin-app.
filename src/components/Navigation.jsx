@@ -1,4 +1,4 @@
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Briefcase, Building2, MessageCircle, MessageSquare, BookOpen, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
