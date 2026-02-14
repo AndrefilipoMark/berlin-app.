@@ -800,7 +800,14 @@ export default function MessagesPage() {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Використовуємо scrollTo для контейнера, щоб уникнути прокрутки всієї сторінки
+    // scrollIntoView може прокручувати body, що ховає хедер
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const getOtherUserProfile = () => {
@@ -936,7 +943,7 @@ export default function MessagesPage() {
     <div
       className={
         isChatView
-          ? 'h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-gray-50'
+          ? 'fixed inset-0 top-[3.5rem] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:static md:h-[calc(100dvh-4rem)] flex flex-col overflow-hidden bg-gray-50'
           : 'min-h-screen bg-gray-50'
       }
     >
@@ -1176,8 +1183,8 @@ export default function MessagesPage() {
             <div className="lg:col-span-2 bg-white overflow-hidden flex flex-col min-h-0">
             {selectedConversation ? (
               <>
-                {/* Chat Header - Sticky зверху */}
-                <div className="sticky top-0 z-20 px-2 py-1.5 md:p-4 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
+                {/* Chat Header */}
+                <div className="px-2 py-1.5 md:p-4 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
                       {/* Кнопка "Назад" на мобільному */}
@@ -1404,7 +1411,7 @@ export default function MessagesPage() {
                             <button
                               onClick={() => handleDeleteMessage(message.id)}
                               disabled={deletingMessageId === message.id}
-                              className="mb-1 p-1 md:p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                              className="mb-1 p-1 md:p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100"
                               title="Видалити повідомлення"
                             >
                               <Trash2 size={12} className="md:w-[14px] md:h-[14px]" strokeWidth={2} />
@@ -1485,7 +1492,7 @@ export default function MessagesPage() {
 
                 {/* Message Input - Sticky знизу, safe-area для вирізів */}
                 {!messages.some(m => m.message_type === 'friend_request' && m.receiver_id === currentUser.id && !m.read) && (
-                  <div className="sticky bottom-0 z-20 px-2 py-2 md:p-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-4 border-t border-gray-200 bg-white shadow-sm flex-shrink-0">
+                  <div className="px-2 py-2 md:p-4 md:pb-4 border-t border-gray-200 bg-white shadow-sm flex-shrink-0">
                     <div className="flex gap-1.5 md:gap-2">
                       <div className="flex-1 relative">
                         <input
@@ -1504,11 +1511,7 @@ export default function MessagesPage() {
                             }
                           }}
                           onFocus={() => {
-                            if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
-                              requestAnimationFrame(() => {
-                                inputRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                              });
-                            }
+                            // Браузер сам обробить фокус, ручний скрол може ламати верстку
                           }}
                           onBlur={() => {
                             handleStopTyping();

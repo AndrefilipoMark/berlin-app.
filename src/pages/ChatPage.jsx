@@ -110,15 +110,22 @@ export default function ChatPage() {
 
   const updateOnlineUsers = (realtimeUsers) => {
     // Об'єднуємо реальних користувачів і статичних ботів
-    const allUsers = [...realtimeUsers];
+    // Deduplicate users by user_id to avoid "same key" warnings
+    const uniqueUsersMap = new Map();
     
-    // Додаємо ботів, якщо їх немає в списку
+    // Add realtime users
+    realtimeUsers.forEach(u => {
+      if (u.user_id) uniqueUsersMap.set(u.user_id, u);
+    });
+    
+    // Add bots if not present
     STATIC_BOTS.forEach(bot => {
-      if (!allUsers.some(u => u.user_id === bot.user_id)) {
-        allUsers.push(bot);
+      if (!uniqueUsersMap.has(bot.user_id)) {
+        uniqueUsersMap.set(bot.user_id, bot);
       }
     });
 
+    const allUsers = Array.from(uniqueUsersMap.values());
     setOnlineUsers(allUsers);
     setOnlineCount(allUsers.length);
   };
@@ -287,11 +294,6 @@ export default function ChatPage() {
       });
       
       console.log('✅ Messages loaded with profiles:', messagesWithProfiles.length, 'messages');
-      messagesWithProfiles.forEach(msg => {
-        if (msg.profiles?.avatar_url) {
-          console.log(`  - Message from ${msg.profiles.full_name}: avatar_url = ${msg.profiles.avatar_url}`);
-        }
-      });
       
       setMessages(messagesWithProfiles);
       setTimeout(() => scrollToBottom(), 300);
@@ -446,33 +448,94 @@ export default function ChatPage() {
     return channel;
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior = 'smooth') => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior
+      });
+    }
   };
 
-  const triggerAutoReply = async (message, authorName) => {
+  const triggerAutoReply = async (message, authorName, messageId, replyToAuthor) => {
     const BOT_CONFIG = {
       ANDRIY: {
+        id: '00000000-0000-0000-0000-000000000001',
         name: 'Андрій Ші 🤖',
-        keywords: ['машина', 'авто', 'робота', 'дозвіл', 'документи', 'ремонт', 'техніка', 'айті', 'it', 'комп', 'драйвер', 'права']
+        keywords: ['машина', 'авто', 'робота', 'дозвіл', 'документи', 'ремонт', 'техніка', 'айті', 'it', 'комп', 'драйвер', 'права', 'пиво', 'бар', 'футбол', 'спорт']
       },
       TANYUSHA: {
+        id: '00000000-0000-0000-0000-000000000002',
         name: 'Танюша Ші 🌸',
-        keywords: ['дитина', 'діти', 'лікар', 'школа', 'садок', 'сумно', 'депресія', 'порадьте', 'краса', 'манікюр', 'кафе', 'ресторан', 'їжа', 'ліки']
+        keywords: ['дитина', 'діти', 'лікар', 'школа', 'садок', 'сумно', 'депресія', 'порадьте', 'краса', 'манікюр', 'кафе', 'ресторан', 'їжа', 'ліки', 'питання', 'допомога', 'хтось', 'живий', 'ау', 'підкажіть', 'знає']
       }
     };
 
-    // 1. Guess the bot
+    // 1. Analyze inputs
     const lowerMsg = message.toLowerCase();
-    const isAndriy = BOT_CONFIG.ANDRIY.keywords.some(k => lowerMsg.includes(k));
-    const isTanyusha = BOT_CONFIG.TANYUSHA.keywords.some(k => lowerMsg.includes(k));
+    const isAndriyKeyword = BOT_CONFIG.ANDRIY.keywords.some(k => lowerMsg.includes(k));
+    const isTanyushaKeyword = BOT_CONFIG.TANYUSHA.keywords.some(k => lowerMsg.includes(k));
     
-    let botName = 'AI';
-    if (lowerMsg.includes('андрій') || lowerMsg.includes('andriy')) botName = BOT_CONFIG.ANDRIY.name;
-    else if (lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha')) botName = BOT_CONFIG.TANYUSHA.name;
-    else if (isAndriy && !isTanyusha) botName = BOT_CONFIG.ANDRIY.name;
-    else if (isTanyusha && !isAndriy) botName = BOT_CONFIG.TANYUSHA.name;
-    else botName = Math.random() > 0.5 ? BOT_CONFIG.ANDRIY.name : BOT_CONFIG.TANYUSHA.name;
+    // Greeting detection
+    const isGreeting = (lowerMsg.includes('привіт') || lowerMsg.includes('вітаю') || lowerMsg.includes('добр')) && 
+                       (lowerMsg.includes('всім') || lowerMsg.includes('усім') || lowerMsg.includes('всіх') || lowerMsg.includes('народ') || lowerMsg.includes('хтось') || lowerMsg.includes('люди'));
+
+    // Mention detection
+    const mentionsAndriy = lowerMsg.includes('андрій') || lowerMsg.includes('andriy');
+    const mentionsTanyusha = lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha') || lowerMsg.includes('тання');
+
+    // Context detection (Last message author)
+    // Find the last bot that spoke in the last 10 messages
+    let lastBotSpeaker = null;
+    if (messages.length > 0) {
+      // Look back up to 10 messages
+      const recentMessages = messages.slice(-10).reverse();
+      for (const msg of recentMessages) {
+        if (msg.user_id === BOT_CONFIG.ANDRIY.id) {
+          lastBotSpeaker = BOT_CONFIG.ANDRIY.name;
+          break;
+        }
+        if (msg.user_id === BOT_CONFIG.TANYUSHA.id) {
+          lastBotSpeaker = BOT_CONFIG.TANYUSHA.name;
+          break;
+        }
+        // If we hit a message from another user (not current user and not bot), maybe break context? 
+        // For now, let's keep it sticky to the bot if the bot spoke recently.
+      }
+    }
+
+    let botName = null;
+
+    // PRIORITY LOGIC:
+    
+    // 1. Explicit Mentions (Highest Priority) - Overrides everything
+    if (mentionsAndriy) botName = BOT_CONFIG.ANDRIY.name;
+    else if (mentionsTanyusha) botName = BOT_CONFIG.TANYUSHA.name;
+    
+    // 2. Reply To Specific Bot (UI Reply)
+    else if (replyToAuthor === BOT_CONFIG.ANDRIY.name) botName = BOT_CONFIG.ANDRIY.name;
+    else if (replyToAuthor === BOT_CONFIG.TANYUSHA.name) botName = BOT_CONFIG.TANYUSHA.name;
+
+    // 3. Conversation Context (Last Speaker) - "Sticky" bot
+    // Only applies if no other strong signal contradicts it (e.g. greeting everyone)
+    // AND message doesn't say "not you"
+    else if (lastBotSpeaker && !isGreeting) {
+       const isNegative = lowerMsg.includes('не тобі') || lowerMsg.includes('не тебе');
+       if (!isNegative) {
+          botName = lastBotSpeaker;
+       }
+    }
+
+    // 4. Greeting -> Tanyusha
+    else if (isGreeting) botName = BOT_CONFIG.TANYUSHA.name;
+    
+    // 5. Keywords
+    else if (isAndriyKeyword && !isTanyushaKeyword) botName = BOT_CONFIG.ANDRIY.name;
+    else if (isTanyushaKeyword && !isAndriyKeyword) botName = BOT_CONFIG.TANYUSHA.name;
+    else if (isAndriyKeyword && isTanyushaKeyword) botName = Math.random() > 0.5 ? BOT_CONFIG.ANDRIY.name : BOT_CONFIG.TANYUSHA.name;
+    
+    // If no bot selected, DO NOT REPLY
+    if (!botName) return;
 
     // 2. Show typing indicator
     setTypingBot(botName);
@@ -490,7 +553,9 @@ export default function ChatPage() {
           message,
           userId: user.id,
           userName: authorName,
-          type: 'chat'
+          type: 'chat',
+          messageId: messageId,
+          replyToAuthor: replyToAuthor // Pass who we are replying to
         })
       });
     } catch (e) {
@@ -578,7 +643,7 @@ export default function ChatPage() {
       );
 
       // Trigger Auto Reply (fire and forget)
-      triggerAutoReply(messageContent, authorName);
+      triggerAutoReply(messageContent, authorName, result.id, replyTo?.author);
       
     } catch (error) {
       console.error('❌ ERROR SENDING MESSAGE:');
@@ -663,7 +728,6 @@ export default function ChatPage() {
   const smartScrollToBottom = () => {
     // Якщо це початкове завантаження сторінки, не прокручуємо вниз
     if (isInitialLoadRef.current) {
-      console.log('⏸️ Skipping auto-scroll to bottom (initial load)');
       return;
     }
     
@@ -722,7 +786,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col" style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] pb-[80px] md:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}

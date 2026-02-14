@@ -984,7 +984,7 @@ export const getFriends = async (userId) => {
 /** Отримати запити на дружбу (pending) */
 export const getFriendRequests = async (userId) => {
   try {
-    console.log('🔍 Getting friend requests for user:', userId);
+    // console.log('🔍 Getting friend requests for user:', userId);
     
     // Спочатку отримуємо записи без join'ів (щоб уникнути помилок PGRST200)
     const { data: requestsData, error: requestsError } = await supabase
@@ -999,10 +999,10 @@ export const getFriendRequests = async (userId) => {
       throw requestsError;
     }
     
-    console.log('📋 Raw friend requests data (without joins):', requestsData);
+    // console.log('📋 Raw friend requests data (without joins):', requestsData);
     
     if (!requestsData || requestsData.length === 0) {
-      console.log('⚠️ No friend requests found');
+      // console.log('⚠️ No friend requests found');
       return [];
     }
     
@@ -1506,7 +1506,7 @@ export const getUnreadMessagesCount = async (userId) => {
 /** Отримати список заблокованих користувачів */
 export const getBlockedUsers = async (userId) => {
   try {
-    console.log('🔍 Getting blocked users for user:', userId);
+    // console.log('🔍 Getting blocked users for user:', userId);
     
     // Спочатку отримуємо записи без join'ів (щоб уникнути помилок PGRST200)
     const { data: blockedData, error: blockedError } = await supabase

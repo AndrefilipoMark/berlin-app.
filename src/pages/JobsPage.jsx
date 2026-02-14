@@ -123,7 +123,7 @@ export default function JobsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-gray-50/50 to-blue-50/30 p-4 md:p-8">
       <div className="max-w-[1400px] mx-auto">
         {/* Page Header */}
-        <div className="mb-8 md:mb-10 text-center md:text-left">
+        <div className="mb-6 md:mb-8 text-center md:text-left">
           <motion.h1 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -142,8 +142,8 @@ export default function JobsPage() {
         </div>
 
         {/* Category Filters */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2.5 md:gap-3">
+        <div className="mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
             {JOBS_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               const isActive = selectedCategory === cat.id;
@@ -151,14 +151,14 @@ export default function JobsPage() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-xl md:rounded-full font-semibold text-sm transition-all duration-300 ${
+                  className={`flex items-center justify-center gap-2 h-11 px-3 py-3 md:py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 w-full ${
                     isActive
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      ? 'bg-primary text-white shadow-md shadow-blue-600/20'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
                 >
-                  <Icon size={16} className={isActive ? 'text-white' : 'text-gray-500'} />
-                  {cat.label}
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-gray-500'} />
+                  <span className="truncate">{cat.label}</span>
                 </button>
               );
             })}
@@ -168,7 +168,7 @@ export default function JobsPage() {
         {/* Content Section */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 size={48} className="text-azure-blue animate-spin mb-4" />
+            <Loader2 size={48} className="text-primary animate-spin mb-4" />
             <p className="text-slate-500 font-medium italic">Завантажуємо вакансії...</p>
           </div>
         ) : filteredJobs.length === 0 ? (

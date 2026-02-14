@@ -282,238 +282,288 @@ export default function Navigation() {
   };
 
   return (
-    <motion.nav
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100/50 shadow-sm"
-    >
-      <div className="max-w-[1600px] mx-auto px-3 md:px-6">
-        <div className="h-14 md:h-16 flex items-center justify-between gap-2 md:gap-4">
-          {/* Navigation Links - Centered with horizontal scroll on mobile */}
-          <div className="flex items-center gap-1.5 md:gap-3 lg:gap-4 flex-1 justify-start md:justify-center overflow-x-auto scrollbar-hide px-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              // Improved active state detection for sub-routes
-              const isActive = item.path === '/' 
-                ? location.pathname === '/'
-                : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-              const activeBgColor = getActiveColor(item.color, 'bg');
-              const activeTextColor = getActiveColor(item.color, 'text');
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="relative flex-shrink-0"
-                >
-                  <motion.div
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex flex-col items-center justify-center px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all ${
-                      isActive 
-                        ? (item.color === 'teal' ? 'bg-teal-50' : `${activeBgColor}/10`)
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon 
-                      size={18} 
-                      className={`md:w-5 md:h-5 transition-colors ${
-                        isActive 
-                          ? activeTextColor
-                          : 'text-gray-500'
-                      }`}
-                      strokeWidth={isActive ? 2.5 : 2}
-                    />
-                    <span className={`text-[10px] md:text-xs leading-none mt-0.5 md:mt-1 transition-colors font-medium whitespace-nowrap ${
-                      isActive 
-                        ? 'text-gray-900' 
-                        : 'text-gray-500'
-                    }`}>
-                      {item.label}
-                    </span>
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeNavIndicator"
-                        className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-6 md:w-8 h-0.5 ${activeBgColor} rounded-full`}
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </div>
+    <>
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100/50 shadow-sm"
+      >
+        <div className="max-w-[1600px] mx-auto px-3 md:px-6">
+          <div className="h-14 md:h-16 flex items-center justify-between gap-2 md:gap-4">
+            {/* Mobile Logo / Title (Visible only on mobile) */}
+            <div className="md:hidden flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-azure-blue rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-lg">D</span>
+              </div>
+              <span className="font-bold text-gray-900 text-lg">DimBerlin</span>
+            </div>
 
-          {/* Login Button / User Avatar - Right side */}
-          <div className="flex-shrink-0 relative">
-            {user ? (
-              <>
-                <motion.div
+            {/* Desktop Navigation Links - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-1.5 md:gap-3 lg:gap-4 flex-1 justify-center px-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                // Improved active state detection for sub-routes
+                const isActive = item.path === '/' 
+                  ? location.pathname === '/'
+                  : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                const activeBgColor = getActiveColor(item.color, 'bg');
+                const activeTextColor = getActiveColor(item.color, 'text');
+                
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="relative flex-shrink-0"
+                  >
+                    <motion.div
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex flex-col items-center justify-center px-2 md:px-3 lg:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all ${
+                        isActive 
+                          ? (item.color === 'teal' ? 'bg-teal-50' : `${activeBgColor}/10`)
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon 
+                        size={18} 
+                        className={`md:w-5 md:h-5 transition-colors ${
+                          isActive 
+                            ? activeTextColor
+                            : 'text-gray-500'
+                        }`}
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                      <span className={`text-[10px] md:text-xs leading-none mt-0.5 md:mt-1 transition-colors font-medium whitespace-nowrap ${
+                        isActive 
+                          ? 'text-gray-900' 
+                          : 'text-gray-500'
+                      }`}>
+                        {item.label}
+                      </span>
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeNavIndicator"
+                          className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-6 md:w-8 h-0.5 ${activeBgColor} rounded-full`}
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                    </motion.div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Login Button / User Avatar - Right side */}
+            <div className="flex-shrink-0 relative">
+              {user ? (
+                <>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 rounded-lg md:rounded-xl cursor-pointer transition-all"
+                  >
+                    <div className="w-7 h-7 md:w-9 md:h-9 bg-primary/10 rounded-full flex items-center justify-center shadow-sm border border-primary/10">
+                      <span className="text-primary font-bold text-xs md:text-sm">
+                        {getUserInitial()}
+                      </span>
+                    </div>
+                    <span className="hidden lg:block text-sm font-bold text-gray-900">
+                      {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
+                    </span>
+                  </motion.div>
+
+                  {/* User Dropdown Menu - Premium Ukrainian Design */}
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ 
+                          type: "spring",
+                          damping: 20,
+                          stiffness: 300,
+                          duration: 0.2
+                        }}
+                        className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100/50 overflow-hidden z-50 backdrop-blur-sm"
+                      >
+                        {/* Ukrainian Flag Gradient Header */}
+                        <div className="relative bg-white p-3 pb-4 border-b border-gray-100">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
+                              <span className="text-primary font-bold text-base">
+                                {getUserInitial()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-extrabold text-gray-900 truncate">
+                                {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
+                              </p>
+                              <p className="text-[10px] text-gray-500 truncate mt-0.5">
+                                {user.email}
+                              </p>
+                              {isAdmin && (
+                                <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded-full border border-primary/20">
+                                  <Shield size={8} />
+                                  АДМІН
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="p-1.5">
+                          <Link
+                            to={`/profile/${user.id}`}
+                            onClick={() => setShowUserMenu(false)}
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative"
+                          >
+                            <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <User size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
+                            </div>
+                            <span className="flex-1">Моя сторінка</span>
+                            {friendRequestsCount > 0 && (
+                              <span className="px-1.5 py-0.5 bg-accent text-gray-900 text-[10px] font-bold rounded-full shadow-sm">
+                                {friendRequestsCount}
+                              </span>
+                            )}
+                          </Link>
+                          
+                          <Link
+                            to="/messages"
+                            onClick={() => setShowUserMenu(false)}
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative mt-0.5"
+                          >
+                            <div className="relative w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <MessageSquare size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
+                              {unreadMessagesCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+                                  <span className="text-white text-[8px] font-bold">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
+                                </span>
+                              )}
+                            </div>
+                            <span className="flex-1">Повідомлення</span>
+                          </Link>
+                          
+                          <Link
+                            to="/profile"
+                            onClick={() => setShowUserMenu(false)}
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                          >
+                            <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <Settings size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
+                            </div>
+                            <span className="flex-1">Налаштування</span>
+                          </Link>
+                          
+                          {isAdmin && (
+                            <Link
+                              to="/admin"
+                              onClick={() => setShowUserMenu(false)}
+                              className="group w-full px-3 py-2 text-left text-xs font-semibold text-accent hover:bg-accent/10 rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
+                            >
+                              <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center group-hover:bg-accent/30 transition-colors">
+                                <Shield size={16} className="text-accent" strokeWidth={2} />
+                              </div>
+                              <span className="flex-1">Адмін-панель</span>
+                            </Link>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="px-3 py-1.5">
+                          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                        </div>
+
+                        {/* Logout Button - Ukrainian Style */}
+                        <div className="p-1.5 pb-2.5">
+                          <button
+                            onClick={handleLogout}
+                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center gap-2.5"
+                          >
+                            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                              <LogOut size={16} className="text-red-600" strokeWidth={2} />
+                            </div>
+                            <span className="flex-1">Вийти</span>
+                            <span className="text-red-400 group-hover:text-red-600 transition-colors">→</span>
+                          </button>
+                        </div>
+
+                        {/* Ukrainian Flag Footer */}
+                        <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-100">
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
+                            <Heart size={10} className="text-red-500 fill-red-500" />
+                            <span>Наш дім Берлін</span>
+                            <span className="text-primary">🇺🇦</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Backdrop to close menu */}
+                  {showUserMenu && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                  )}
+                </>
+              ) : (
+                <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 md:py-2 bg-gray-50 hover:bg-gray-100 rounded-lg md:rounded-xl cursor-pointer transition-all"
+                  onClick={() => setShowLoginModal(true)}
+                  className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-primary text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm shadow-sm hover:shadow-md hover:bg-blue-800 transition-all"
                 >
-                  <div className="w-7 h-7 md:w-9 md:h-9 bg-primary/10 rounded-full flex items-center justify-center shadow-sm border border-primary/10">
-                    <span className="text-primary font-bold text-xs md:text-sm">
-                      {getUserInitial()}
-                    </span>
-                  </div>
-                  <span className="hidden lg:block text-sm font-bold text-gray-900">
-                    {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
-                  </span>
-                </motion.div>
-
-                {/* User Dropdown Menu - Premium Ukrainian Design */}
-                <AnimatePresence>
-                  {showUserMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ 
-                        type: "spring",
-                        damping: 20,
-                        stiffness: 300,
-                        duration: 0.2
-                      }}
-                      className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100/50 overflow-hidden z-50 backdrop-blur-sm"
-                    >
-                      {/* Ukrainian Flag Gradient Header */}
-                      <div className="relative bg-white p-3 pb-4 border-b border-gray-100">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-sm">
-                            <span className="text-primary font-bold text-base">
-                              {getUserInitial()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-extrabold text-gray-900 truncate">
-                              {profile?.full_name || user?.email?.split('@')[0] || 'Користувач'}
-                            </p>
-                            <p className="text-[10px] text-gray-500 truncate mt-0.5">
-                              {user.email}
-                            </p>
-                            {isAdmin && (
-                              <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded-full border border-primary/20">
-                                <Shield size={8} />
-                                АДМІН
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Menu Items */}
-                      <div className="p-1.5">
-                        <Link
-                          to={`/profile/${user.id}`}
-                          onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative"
-                        >
-                          <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <User size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
-                          </div>
-                          <span className="flex-1">Моя сторінка</span>
-                          {friendRequestsCount > 0 && (
-                            <span className="px-1.5 py-0.5 bg-accent text-gray-900 text-[10px] font-bold rounded-full shadow-sm">
-                              {friendRequestsCount}
-                            </span>
-                          )}
-                        </Link>
-                        
-                        <Link
-                          to="/messages"
-                          onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 relative mt-0.5"
-                        >
-                          <div className="relative w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <MessageSquare size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
-                            {unreadMessagesCount > 0 && (
-                              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
-                                <span className="text-white text-[8px] font-bold">{unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}</span>
-                              </span>
-                            )}
-                          </div>
-                          <span className="flex-1">Повідомлення</span>
-                        </Link>
-                        
-                        <Link
-                          to="/profile"
-                          onClick={() => setShowUserMenu(false)}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-gray-700 hover:bg-primary/5 hover:text-primary rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
-                        >
-                          <div className="w-8 h-8 bg-primary/5 rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <Settings size={16} className="text-primary/70 group-hover:text-primary" strokeWidth={2} />
-                          </div>
-                          <span className="flex-1">Налаштування</span>
-                        </Link>
-                        
-                        {isAdmin && (
-                          <Link
-                            to="/admin"
-                            onClick={() => setShowUserMenu(false)}
-                            className="group w-full px-3 py-2 text-left text-xs font-semibold text-accent hover:bg-accent/10 rounded-lg transition-all duration-200 flex items-center gap-2.5 mt-0.5"
-                          >
-                            <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center group-hover:bg-accent/30 transition-colors">
-                              <Shield size={16} className="text-accent" strokeWidth={2} />
-                            </div>
-                            <span className="flex-1">Адмін-панель</span>
-                          </Link>
-                        )}
-                      </div>
-
-                      {/* Divider */}
-                      <div className="px-3 py-1.5">
-                        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-                      </div>
-
-                      {/* Logout Button - Ukrainian Style */}
-                      <div className="p-1.5 pb-2.5">
-                        <button
-                          onClick={handleLogout}
-                          className="group w-full px-3 py-2 text-left text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center gap-2.5"
-                        >
-                          <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                            <LogOut size={16} className="text-red-600" strokeWidth={2} />
-                          </div>
-                          <span className="flex-1">Вийти</span>
-                          <span className="text-red-400 group-hover:text-red-600 transition-colors">→</span>
-                        </button>
-                      </div>
-
-                      {/* Ukrainian Flag Footer */}
-                      <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-100">
-                        <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
-                          <Heart size={10} className="text-red-500 fill-red-500" />
-                          <span>Наш дім Берлін</span>
-                          <span className="text-primary">🇺🇦</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Backdrop to close menu */}
-                {showUserMenu && (
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                )}
-              </>
-            ) : (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-primary text-white rounded-lg md:rounded-xl font-semibold text-xs md:text-sm shadow-sm hover:shadow-md hover:bg-blue-800 transition-all"
-              >
-                <LogIn size={16} className="md:w-5 md:h-5" strokeWidth={2.5} />
-                <span className="hidden sm:inline">Увійти</span>
-              </motion.button>
-            )}
+                  <LogIn size={16} className="md:w-5 md:h-5" strokeWidth={2.5} />
+                  <span className="hidden sm:inline">Увійти</span>
+                </motion.button>
+              )}
+            </div>
           </div>
+        </div>
+      </motion.nav>
+
+      {/* Bottom Navigation Bar for Mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-between items-center px-2 py-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.path === '/' 
+              ? location.pathname === '/'
+              : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const activeTextColor = getActiveColor(item.color, 'text');
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center w-full"
+              >
+                <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-blue-50' : 'bg-transparent'}`}>
+                  <Icon 
+                    size={24} 
+                    className={`transition-colors ${
+                      isActive 
+                        ? activeTextColor
+                        : 'text-gray-400'
+                    }`}
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                </div>
+                <span className={`text-[10px] leading-none mt-1 transition-colors font-medium ${
+                  isActive 
+                    ? 'text-gray-900' 
+                    : 'text-gray-500'
+                }`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
@@ -541,6 +591,6 @@ export default function Navigation() {
           />
         )}
       </AnimatePresence>
-    </motion.nav>
+    </>
   );
 }

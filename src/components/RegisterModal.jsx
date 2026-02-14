@@ -125,7 +125,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }) {
               Ви успішно зареєструвалися та увійшли
             </p>
             <p className="text-sm text-slate-500">
-              Ласкаво просимо до спільноти Berlin App!
+              Ласкаво просимо до спільноти DimBerlin!
             </p>
           </motion.div>
         </motion.div>

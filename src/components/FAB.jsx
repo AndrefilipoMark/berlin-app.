@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Briefcase, Home, MessageCircle, Building2, Sparkles } from 'lucide-react';
+import { Plus, Briefcase, Home, MessageCircle, Building2, BookOpen } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -27,7 +27,7 @@ export default function FAB() {
       case '/housing':
         return { show: true, action: 'housing', icon: Home, color: 'bg-primary' };
       case '/services':
-        return { show: true, action: 'service', icon: Sparkles, color: 'bg-primary' };
+        return { show: true, action: 'service', icon: BookOpen, color: 'bg-primary' };
       case '/forum':
         return { show: true, action: 'forum', icon: MessageCircle, color: 'bg-primary' };
       default:
@@ -84,7 +84,7 @@ export default function FAB() {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
+    <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40">
       {/* Main FAB Button */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
