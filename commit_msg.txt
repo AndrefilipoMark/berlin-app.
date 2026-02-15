@@ -1,4 +1,5 @@
-Add debug page to diagnose Supabase connection issues
+Update debug page with API key validation
 
-- Added /debug route
-- Implemented connection test and environment variable check
+- Added strict validation for Supabase Anon Key format (JWT check)
+- Added warning messages for incorrect key formats
+- Improved error display and instructions
