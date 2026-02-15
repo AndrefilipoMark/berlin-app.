@@ -840,7 +840,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)]" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
