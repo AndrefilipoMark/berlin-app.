@@ -34,6 +34,7 @@ export default function ChatPage() {
   const channelRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
+  const inputContainerRef = useRef(null);
   const realtimeRetryCountRef = useRef(0);
   const mountedRef = useRef(true);
   const isInitialLoadRef = useRef(true);
@@ -41,6 +42,7 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const PAGE_SIZE = 30;
+  const [inputHeight, setInputHeight] = useState(72);
 
   // Боти завжди онлайн
   const STATIC_BOTS = [
@@ -104,6 +106,21 @@ export default function ChatPage() {
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    const el = inputContainerRef.current;
+    if (!el) return;
+    const update = () => setInputHeight(el.offsetHeight || 0);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    const onResize = () => update();
+    window.addEventListener('resize', onResize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', onResize);
+    };
+  }, [showEmojiPicker]);
 
   useEffect(() => {
     // Встановлюємо початкових ботів як онлайн
@@ -920,7 +937,7 @@ export default function ChatPage() {
       </motion.div>
 
       {/* Messages - фіксована висота з прокруткою */}
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0, paddingBottom: inputHeight }}>
         <div className="max-w-[1200px] mx-auto space-y-3">
           {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -1096,6 +1113,7 @@ export default function ChatPage() {
 
       {/* Input - зафіксована панель внизу */}
       <motion.div
+        ref={inputContainerRef}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg p-4"
