@@ -18,6 +18,7 @@ import ProfileSettings from './pages/ProfileSettings';
 import PublicProfile from './pages/PublicProfile';
 import MessagesPage from './pages/MessagesPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import DebugPage from './pages/DebugPage';
 import Impressum from './pages/legal/Impressum';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfUse from './pages/legal/TermsOfUse';
@@ -222,6 +223,7 @@ function AnimatedRoutes() {
             <ResetPasswordPage />
           </motion.div>
         } />
+        <Route path="/debug" element={<DebugPage />} />
       </Routes>
     </AnimatePresence>
   );
