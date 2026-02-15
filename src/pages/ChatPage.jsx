@@ -34,7 +34,6 @@ export default function ChatPage() {
   const channelRef = useRef(null);
   const inputRef = useRef(null);
   const emojiPickerRef = useRef(null);
-  const inputContainerRef = useRef(null);
   const realtimeRetryCountRef = useRef(0);
   const mountedRef = useRef(true);
   const isInitialLoadRef = useRef(true);
@@ -42,7 +41,6 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const PAGE_SIZE = 30;
-  const [inputHeight, setInputHeight] = useState(72);
 
   // Боти завжди онлайн
   const STATIC_BOTS = [
@@ -106,21 +104,6 @@ export default function ChatPage() {
       mountedRef.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    const el = inputContainerRef.current;
-    if (!el) return;
-    const update = () => setInputHeight(el.offsetHeight || 0);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    const onResize = () => update();
-    window.addEventListener('resize', onResize);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', onResize);
-    };
-  }, [showEmojiPicker]);
 
   useEffect(() => {
     // Встановлюємо початкових ботів як онлайн
@@ -857,7 +840,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)]" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 fixed inset-0 top-[3.5rem] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:static md:h-[calc(100vh-64px)] flex flex-col overflow-hidden">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -937,7 +920,7 @@ export default function ChatPage() {
       </motion.div>
 
       {/* Messages - фіксована висота з прокруткою */}
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0, paddingBottom: inputHeight }}>
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 min-h-0" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div className="max-w-[1200px] mx-auto space-y-3">
           {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -1113,11 +1096,10 @@ export default function ChatPage() {
 
       {/* Input - зафіксована панель внизу */}
       <motion.div
-        ref={inputContainerRef}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg p-4"
-        style={{ flexShrink: 0, position: 'sticky', bottom: 0, zIndex: 10 }}
+        className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg p-4 flex-shrink-0"
+        style={{ zIndex: 10 }}
       >
         <div className="max-w-[1200px] mx-auto">
           {/* Reply Banner */}
