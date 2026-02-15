@@ -40,7 +40,7 @@ export default function ChatPage() {
   const oldestLoadedAtRef = useRef(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
-  const PAGE_SIZE = 30;
+  const PAGE_SIZE = 20;
 
   // Боти завжди онлайн
   const STATIC_BOTS = [
@@ -199,15 +199,10 @@ export default function ChatPage() {
     
     // Невелика затримка для того, щоб контейнер встиг відрендеритися
     const timer = setTimeout(() => {
-      // Прокручуємо контейнер повідомлень вгору (якщо він існує)
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = 0;
-        console.log('✅ Scrolled chat container to top');
-      } else {
-        console.log('⚠️ messagesContainerRef.current is null');
-      }
+      // NOTE: Ми НЕ прокручуємо контейнер повідомлень вгору, 
+      // тому що хочемо бачити останні повідомлення (внизу).
       
-      // Після прокрутки вгору, через деякий час скидаємо прапорець
+      // Після завантаження, через деякий час скидаємо прапорець
       setTimeout(() => {
         isInitialLoadRef.current = false;
       }, 1000);
@@ -780,8 +775,9 @@ export default function ChatPage() {
   };
 
   const smartScrollToBottom = () => {
-    // Якщо це початкове завантаження сторінки, не прокручуємо вниз
+    // Якщо це початкове завантаження, скролимо миттєво вниз
     if (isInitialLoadRef.current) {
+      scrollToBottom('instant');
       return;
     }
     

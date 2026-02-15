@@ -1,0 +1,6 @@
+Fix chat initial scroll position and implement infinite scroll pagination
+
+- Reduced initial message load to 20 messages
+- Removed forced scroll to top on chat page mount
+- Implemented instant scroll to bottom on initial load
+- Enabled infinite scroll for older messages
