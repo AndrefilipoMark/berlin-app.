@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Send, Loader2, Users, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { supabase, getMessages, sendMessage, deleteMessage } from '../lib/supabase';
+import { supabase, getMessages, getMessagesPage, sendMessage, deleteMessage } from '../lib/supabase';
 import GuestGuard from '../components/GuestGuard';
 import LoginModal from '../components/LoginModal';
 import RegisterModal from '../components/RegisterModal';
@@ -37,6 +37,10 @@ export default function ChatPage() {
   const realtimeRetryCountRef = useRef(0);
   const mountedRef = useRef(true);
   const isInitialLoadRef = useRef(true);
+  const oldestLoadedAtRef = useRef(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const PAGE_SIZE = 30;
 
   // Боти завжди онлайн
   const STATIC_BOTS = [
@@ -257,7 +261,7 @@ export default function ChatPage() {
     try {
       setLoading(true);
       const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
-      const messagesData = await Promise.race([getMessages(100), timeout(10000)]);
+      const messagesData = await Promise.race([getMessagesPage({ limit: PAGE_SIZE }), timeout(10000)]);
       
       if (!Array.isArray(messagesData)) {
         setMessages([]);
@@ -294,6 +298,8 @@ export default function ChatPage() {
       
       console.log('✅ Messages loaded with profiles:', messagesWithProfiles.length, 'messages');
       
+      oldestLoadedAtRef.current = messagesWithProfiles.length > 0 ? messagesWithProfiles[0].created_at : null;
+      setHasMore(messagesData.length === PAGE_SIZE);
       setMessages(messagesWithProfiles);
       setTimeout(() => scrollToBottom(), 300);
     } catch (e) {
@@ -301,6 +307,55 @@ export default function ChatPage() {
       setMessages([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOlderMessages = async () => {
+    if (loadingOlder || !hasMore || !oldestLoadedAtRef.current) return;
+    setLoadingOlder(true);
+    const container = messagesContainerRef.current;
+    const prevHeight = container ? container.scrollHeight : 0;
+    const prevTop = container ? container.scrollTop : 0;
+    try {
+      const older = await getMessagesPage({ limit: PAGE_SIZE, before: oldestLoadedAtRef.current });
+      if (!Array.isArray(older) || older.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      const userIds = [...new Set(older.map(m => m.user_id).filter(Boolean))];
+      const profilesMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, district, is_admin')
+          .in('id', userIds);
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.id, p));
+        }
+      }
+      const olderWithProfiles = older.map(msg => ({
+        ...msg,
+        profiles: profilesMap.get(msg.user_id) || null
+      }));
+      oldestLoadedAtRef.current = olderWithProfiles[0].created_at;
+      setHasMore(older.length === PAGE_SIZE);
+      setMessages(prev => [...olderWithProfiles, ...prev]);
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          const newHeight = messagesContainerRef.current.scrollHeight;
+          messagesContainerRef.current.scrollTop = newHeight - prevHeight + prevTop;
+        }
+      }, 10);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    if (el.scrollTop < 40) {
+      loadOlderMessages();
     }
   };
 
@@ -785,7 +840,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] pb-[80px] md:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)]" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -807,9 +862,10 @@ export default function ChatPage() {
                 {onlineUsers.length > 0 && (
                   <div className="flex items-center gap-1">
                     {onlineUsers.slice(0, 3).map((presence, idx) => (
-                      <div
+                      <button
                         key={presence.user_id || idx}
-                        className="w-6 h-6 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center"
+                        onClick={() => handleProfileClick(presence.user_id)}
+                        className="w-6 h-6 rounded-full overflow-hidden border-2 border-white shadow-sm flex items-center justify-center hover:scale-105 transition-transform"
                         title={presence.full_name || 'Користувач'}
                       >
                         {presence.avatar_url ? (
@@ -825,7 +881,7 @@ export default function ChatPage() {
                             </span>
                           </div>
                         )}
-                      </div>
+                      </button>
                     ))}
                     {onlineUsers.length > 3 && (
                       <span className="text-xs text-gray-500 ml-1">+{onlineUsers.length - 3}</span>
@@ -864,7 +920,7 @@ export default function ChatPage() {
       </motion.div>
 
       {/* Messages - фіксована висота з прокруткою */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
         <div className="max-w-[1200px] mx-auto space-y-3">
           {loading ? (
             <div className="flex items-center justify-center h-full">
@@ -897,7 +953,7 @@ export default function ChatPage() {
                   }}
                   className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`flex gap-3 max-w-[70%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className={`flex gap-2 max-w-[85%] ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
                     {/* Clickable Avatar */}
                     <button
                       onClick={() => handleProfileClick(message.user_id)}
@@ -943,25 +999,27 @@ export default function ChatPage() {
                     </button>
 
                     {/* Message Bubble */}
-                    <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                    <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} flex-1 min-w-0`}>
                       {/* Author Info */}
-                      <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <div className={`flex items-baseline gap-x-2 flex-wrap mb-0 px-1 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
                         <button
                           onClick={() => handleProfileClick(message.user_id)}
-                          className="text-xs font-bold text-gray-700 hover:text-azure-blue transition-colors"
+                          className="text-[11px] font-bold text-gray-700 hover:text-azure-blue transition-colors whitespace-nowrap"
                         >
                           {getAuthorName(message)}
-                          {getAuthorDistrict(message) && (
-                            <span className="text-gray-500 font-normal"> | {getAuthorDistrict(message)}</span>
-                          )}
                         </button>
-                        <span className="text-xs text-gray-400">
+                        {getAuthorDistrict(message) && (
+                          <span className="text-[10px] text-gray-400 font-normal truncate max-w-[120px]">
+                            {getAuthorDistrict(message)}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap">
                           {getTimeAgo(message.created_at)}
                         </span>
                       </div>
                       
                       {/* Message Content */}
-                      <div className="flex items-start gap-2">
+                      <div className={`flex items-start gap-1.5 w-full ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
                         {isMine && canDelete && (
                           <button
                             onClick={() => handleDeleteMessage(message.id)}
@@ -973,8 +1031,8 @@ export default function ChatPage() {
                           </button>
                         )}
                         
-                        <div className="flex flex-col gap-1 max-w-lg">
-                          <div className={`px-4 py-3 rounded-2xl ${
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className={`px-3 py-2 rounded-2xl ${
                             isMine
                               ? 'bg-gradient-to-br from-azure-blue via-blue-500 to-blue-600 text-white rounded-br-md shadow-lg shadow-blue-500/30'
                               : 'bg-gradient-to-br from-white to-gray-50 text-gray-900 rounded-bl-md border border-gray-200 shadow-lg'

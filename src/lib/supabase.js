@@ -753,6 +753,30 @@ export const getMessages = async (limit = 100) => {
   }
 };
 
+export const getMessagesPage = async ({ limit = 30, before = null } = {}) => {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    let query = supabase
+      .from('messages')
+      .select('*')
+      .gt('created_at', twentyFourHoursAgo)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (before) {
+      query = query.lt('created_at', before);
+    }
+    const { data, error } = await query;
+    if (error) {
+      console.warn('getMessagesPage error:', error);
+      return [];
+    }
+    return (data || []).reverse();
+  } catch (e) {
+    console.warn('getMessagesPage exception:', e);
+    return [];
+  }
+};
+
 export const sendMessage = async (messageData) => {
   const { data, error } = await supabase
     .from('messages')
@@ -1645,4 +1669,3 @@ export const requestAccountDeletion = async (userData) => {
   });
   if (error) throw error;
 };
-

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Briefcase, Home, Stethoscope, MessageCircle, Building2, Sparkles, ImagePlus, Trash2, Loader2 } from 'lucide-react';
+import { X, Briefcase, Home, Stethoscope, MessageCircle, Building2, BookOpen, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, createJob, createHousing, updateHousing, uploadHousingPhoto, createService, createForumPost } from '../lib/supabase';
 import { emitEvent, Events } from '../lib/events';
@@ -558,7 +558,7 @@ export function ServiceFormModal({ onClose }) {
   return (
     <FormModalContainer
       title="Додати сервіс"
-      icon={Sparkles}
+      icon={BookOpen}
       iconColor="text-primary"
       onClose={onClose}
     >

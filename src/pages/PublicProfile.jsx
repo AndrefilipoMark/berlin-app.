@@ -11,7 +11,7 @@ import {
   MessageCircle,
   Briefcase,
   Home,
-  Sparkles,
+  BookOpen,
   UserPlus,
   Check,
   X as XIcon,
@@ -1046,7 +1046,7 @@ export default function PublicProfile() {
                 <span className="text-xs text-gray-600 font-medium">житло</span>
               </div>
               <div className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-2xl border border-gray-200">
-                <Sparkles size={24} className="text-blue-600 mb-2" strokeWidth={2} />
+                <BookOpen size={24} className="text-blue-600 mb-2" strokeWidth={2} />
                 <span className="text-2xl font-bold text-gray-900">{activity.services.length}</span>
                 <span className="text-xs text-gray-600 font-medium">послуг</span>
               </div>

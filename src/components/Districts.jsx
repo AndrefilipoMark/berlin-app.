@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MapPin, Users, Home as HomeIcon, Briefcase, Sparkles, Loader2 } from 'lucide-react';
+import { MapPin, Users, Home as HomeIcon, Briefcase, BookOpen, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getDistrictsStats } from '../lib/supabase';
 
@@ -106,7 +106,7 @@ export default function Districts() {
                     <span className="font-semibold text-gray-700">{district.housing} {district.housing === 1 ? 'житло' : district.housing < 5 ? 'житла' : 'житла'}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
-                    <Sparkles size={12} className={config.iconColor} strokeWidth={2.5} />
+                    <BookOpen size={12} className={config.iconColor} strokeWidth={2.5} />
                     <span className="font-semibold text-gray-700">{district.services} {district.services === 1 ? 'послуга' : district.services < 5 ? 'послуги' : 'послуг'}</span>
                   </div>
                 </div>
