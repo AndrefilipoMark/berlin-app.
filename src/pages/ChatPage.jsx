@@ -840,7 +840,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col h-[calc(100vh-130px)] md:h-[calc(100vh-64px)]" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -920,7 +920,7 @@ export default function ChatPage() {
       </motion.div>
 
       {/* Messages - фіксована висота з прокруткою */}
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', minHeight: 0 }}>
         <div className="max-w-[1200px] mx-auto space-y-3">
           {loading ? (
             <div className="flex items-center justify-center h-full">
