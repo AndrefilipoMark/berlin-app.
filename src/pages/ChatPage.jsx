@@ -840,7 +840,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 fixed inset-0 top-[3.5rem] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:static md:h-[calc(100vh-64px)] flex flex-col overflow-hidden">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 fixed inset-0 top-[3.5rem] md:static md:h-[calc(100vh-64px)] flex flex-col overflow-hidden">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
@@ -1098,7 +1098,7 @@ export default function ChatPage() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg p-4 flex-shrink-0"
+        className="bg-white/80 backdrop-blur-lg border-t border-white/50 shadow-lg px-2 pt-2 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:p-4 flex-shrink-0"
         style={{ zIndex: 10 }}
       >
         <div className="max-w-[1200px] mx-auto">

@@ -10,9 +10,15 @@ dotenv.config();
 // Initialize Supabase Admin Client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('CRITICAL: Missing Supabase credentials in .env');
   throw new Error('Missing Supabase credentials');
+}
+
+if (!googleApiKey) {
+  console.error('CRITICAL: Missing GOOGLE_GENERATIVE_AI_API_KEY (or GOOGLE_API_KEY) in .env');
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -79,6 +85,32 @@ export default async function handler(request, response) {
     const isGreeting = (lowerMsg.includes('привіт') || lowerMsg.includes('вітаю') || lowerMsg.includes('добр')) && 
                        (lowerMsg.includes('всім') || lowerMsg.includes('усім') || lowerMsg.includes('всіх') || lowerMsg.includes('народ') || lowerMsg.includes('хтось') || lowerMsg.includes('люди'));
 
+    // Bot Selection Logic (MOVED UP)
+    // 1. If Replying to a specific bot -> FORCE that bot
+    if (replyToAuthor === BOTS.ANDRIY.name) {
+       selectedBot = BOTS.ANDRIY;
+    } else if (replyToAuthor === BOTS.TANYUSHA.name) {
+       selectedBot = BOTS.TANYUSHA;
+    }
+    // 2. Greetings -> Tanyusha
+    else if (isGreeting) {
+       selectedBot = BOTS.TANYUSHA;
+    }
+    // 3. Explicit Mentions (Override keywords)
+    else if (lowerMsg.includes('андрій') || lowerMsg.includes('andriy')) {
+      selectedBot = BOTS.ANDRIY;
+    } else if (lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha') || lowerMsg.includes('тання')) {
+      selectedBot = BOTS.TANYUSHA;
+    }
+    // 5. Keywords (if no context)
+    else if (isAndriy && !isTanyusha) {
+      selectedBot = BOTS.ANDRIY;
+    } else if (isTanyusha && !isAndriy) {
+      selectedBot = BOTS.TANYUSHA;
+    } else if (isAndriy && isTanyusha) {
+      selectedBot = Math.random() > 0.5 ? BOTS.ANDRIY : BOTS.TANYUSHA;
+    }
+    
     // 3. Fetch Chat History for Context (Last 30 messages)
     let historyContext = "";
     let lastBotUserId = null;
@@ -103,12 +135,21 @@ export default async function handler(request, response) {
                break;
              }
            }
+           
+           // Apply Sticky Context if no bot selected yet
+           if (!selectedBot && lastBotUserId && !isGreeting) {
+              const isNegative = lowerMsg.includes('не тобі') || lowerMsg.includes('не тебе');
+              if (!isNegative) {
+                 if (lastBotUserId === BOTS.ANDRIY.id) selectedBot = BOTS.ANDRIY;
+                 else if (lastBotUserId === BOTS.TANYUSHA.id) selectedBot = BOTS.TANYUSHA;
+              }
+           }
 
            // Reverse to chronological order for the prompt
            historyContext = history.reverse()
              .map(m => {
-               const isMe = m.user_id === selectedBot.id;
-               return `${isMe ? 'YOU (' + selectedBot.name + ')' : (m.author_name || 'User')}: ${m.content}`;
+               const isMe = selectedBot ? m.user_id === selectedBot.id : false;
+               return `${isMe ? 'YOU (' + (selectedBot?.name || 'Bot') + ')' : (m.author_name || 'User')}: ${m.content}`;
              })
              .join('\n');
         }
@@ -117,43 +158,7 @@ export default async function handler(request, response) {
       }
     }
 
-    // Bot Selection Logic
-    // 1. If Replying to a specific bot -> FORCE that bot
-    if (replyToAuthor === BOTS.ANDRIY.name) {
-       selectedBot = BOTS.ANDRIY;
-    } else if (replyToAuthor === BOTS.TANYUSHA.name) {
-       selectedBot = BOTS.TANYUSHA;
-    }
-    // 2. Greetings -> Tanyusha
-    else if (isGreeting) {
-       selectedBot = BOTS.TANYUSHA;
-    }
-    // 3. Explicit Mentions (Override keywords)
-    else if (lowerMsg.includes('андрій') || lowerMsg.includes('andriy')) {
-      selectedBot = BOTS.ANDRIY;
-    } else if (lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha') || lowerMsg.includes('тання')) {
-      selectedBot = BOTS.TANYUSHA;
-    }
-    // 4. Sticky Context (If no explicit mention/reply, continue conversation with last bot)
-     // BUT: If the user says "Таня" or "Андрій", we must respect that (already handled in step 3)
-     // AND: If the user message contains NEGATIVE context towards the current bot (e.g. "not you", "не тобі"), we should RESET sticky context.
-     else if (lastBotUserId && !isGreeting) {
-        // Simple heuristic: If message contains "не тобі" (not you) or "ти хто" (who are you), ignore sticky context
-        const isNegative = lowerMsg.includes('не тобі') || lowerMsg.includes('не тебе');
-        
-        if (!isNegative) {
-           if (lastBotUserId === BOTS.ANDRIY.id) selectedBot = BOTS.ANDRIY;
-           else if (lastBotUserId === BOTS.TANYUSHA.id) selectedBot = BOTS.TANYUSHA;
-        }
-     }
-     // 5. Keywords (if no context)
-    else if (isAndriy && !isTanyusha) {
-      selectedBot = BOTS.ANDRIY;
-    } else if (isTanyusha && !isAndriy) {
-      selectedBot = BOTS.TANYUSHA;
-    } else if (isAndriy && isTanyusha) {
-      selectedBot = Math.random() > 0.5 ? BOTS.ANDRIY : BOTS.TANYUSHA;
-    } else {
+    if (!selectedBot) {
        // NO RANDOM FALLBACK. Silence is golden.
        return response.status(200).json({ skipped: true });
     }
@@ -179,50 +184,76 @@ export default async function handler(request, response) {
       - If recommending a doctor/service, invent a realistic plausible recommendation in Berlin (e.g. "Praxis am Alex", "Dr. Müller in Mitte") or general advice.`;
     }
     // Generate response
-    // NOTE: We are reverting to standard model without search grounding as it proved unreliable for this specific setup.
-    // Instead, we rely on the dynamic timestamp injection and the "Honesty Policy" in system prompts.
+    console.log('Generating response for bot:', selectedBot.name);
     
-    const { text } = await generateText({
-      model: google('gemini-2.0-flash'), 
-      system: selectedBot.systemPrompt + contextInstruction + replyInstruction +
-              `\n\nCURRENT TIME AND DATE: ${new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Berlin' })} (Berlin Time)\n` +
-              `\n\nCHAT HISTORY (Older messages first):\n${historyContext}\n\n` +
-              `INSTRUCTION: Analyze the CHAT HISTORY above to understand the context. ` +
-              `Reply specifically to the last message from ${userName}. ` +
-              `If the user asks a follow-up question (e.g. "how much?", "really?", "and you?"), REFER to the CHAT HISTORY to understand what they are talking about. ` +
-              `If the user is asking a general question to everyone ("Hello everyone..."), answer it. ` +
-              `If the user is replying to someone else and not you, and your name is not mentioned, you can choose to stay silent (reply with empty string) or give a very short comment if you have strong expertise. ` +
-              `But since you were selected by the system, you SHOULD probably reply. Just keep it relevant.`,
-      prompt: `User ${userName || 'Friend'} said: "${message}". Reply naturally.`,
-    });
-
-    // Save response to DB
-    if (type === 'chat') {
-      const { error } = await supabase.from('messages').insert({
-        content: text,
-        user_id: selectedBot.id,
-        reply_to_id: messageId || null // Link the reply to the user's message
+    try {
+      // Use gemini-2.0-flash for best performance
+      const { text } = await generateText({
+        model: google('gemini-2.0-flash', { apiKey: googleApiKey }), 
+        system: selectedBot.systemPrompt + contextInstruction + replyInstruction +
+                `\n\nCURRENT TIME AND DATE: ${new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Berlin' })} (Berlin Time)\n` +
+                `\n\nCHAT HISTORY (Older messages first):\n${historyContext}\n\n` +
+                `INSTRUCTION: Analyze the CHAT HISTORY above to understand the context. ` +
+                `Reply specifically to the last message from ${userName}. ` +
+                `If the user asks a follow-up question (e.g. "how much?", "really?", "and you?"), REFER to the CHAT HISTORY to understand what they are talking about. ` +
+                `If the user is asking a general question to everyone ("Hello everyone..."), answer it. ` +
+                `If the user is replying to someone else and not you, and your name is not mentioned, you can choose to stay silent (reply with empty string) or give a very short comment if you have strong expertise. ` +
+                `But since you were selected by the system, you SHOULD probably reply. Just keep it relevant.`,
+        prompt: `User ${userName || 'Friend'} said: "${message}". Reply naturally.`,
       });
-      if (error) throw error;
-    } else if (type === 'forum_reply') {
-       // Save forum reply
-       const { postId } = request.body;
-       if (postId) {
-          const { error } = await supabase.from('forum_replies').insert({
-            post_id: postId,
-            content: text,
-            user_id: selectedBot.id,
-            author_name: selectedBot.name
-          });
-          if (error) throw error;
-       }
-    }
 
-    return response.status(200).json({ 
-      success: true, 
-      bot: selectedBot.name, 
-      reply: text 
-    });
+      console.log('Response generated successfully:', text ? 'YES' : 'NO');
+
+      // Save response to DB
+      if (type === 'chat') {
+        const { error } = await supabase.from('messages').insert({
+          content: text,
+          user_id: selectedBot.id,
+          reply_to_id: messageId || null // Link the reply to the user's message
+        });
+        if (error) throw error;
+      } else if (type === 'forum_reply') {
+         // Save forum reply
+         const { postId } = request.body;
+         if (postId) {
+            const { error } = await supabase.from('forum_replies').insert({
+              post_id: postId,
+              content: text,
+              user_id: selectedBot.id,
+              author_name: selectedBot.name
+            });
+            if (error) throw error;
+         }
+      }
+
+      return response.status(200).json({ 
+        success: true, 
+        bot: selectedBot.name, 
+        reply: text 
+      });
+
+    } catch (genError) {
+       console.error('Generation Error:', genError);
+       
+       // Fallback response instead of 500
+       const fallbackText = "Вибач, щось пішло не так з моїм з'єднанням. Спробуй пізніше.";
+       
+       if (type === 'chat') {
+          await supabase.from('messages').insert({
+            content: fallbackText,
+            user_id: selectedBot.id,
+            reply_to_id: messageId || null
+          });
+       }
+       
+       return response.status(200).json({ 
+         success: true, 
+         bot: selectedBot.name, 
+         reply: fallbackText,
+         error: genError.message 
+       });
+       // return response.status(500).json({ error: 'AI Generation Failed: ' + genError.message });
+    }
 
   } catch (error) {
     console.error('Auto-reply error:', error);
