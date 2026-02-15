@@ -1429,6 +1429,29 @@ export const getPrivateMessages = async (userId, otherUserId) => {
   }
 };
 
+export const getPrivateMessagesPage = async ({ userId, otherUserId, limit = 50, before = null } = {}) => {
+  try {
+    let query = supabase
+      .from('private_messages')
+      .select('*')
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (before) {
+      query = query.lt('created_at', before);
+    }
+    const { data, error } = await query;
+    if (error) {
+      console.warn('getPrivateMessagesPage error:', error);
+      return [];
+    }
+    return (data || []).reverse();
+  } catch (e) {
+    console.warn('getPrivateMessagesPage exception:', e);
+    return [];
+  }
+};
+
 /** Відправити приватне повідомлення */
 export const sendPrivateMessage = async (senderId, receiverId, message) => {
   try {

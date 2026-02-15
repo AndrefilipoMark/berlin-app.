@@ -1,8 +1,7 @@
-import { motion } from 'framer-motion';
 import { MessageSquare, Send, Loader2, Users, ArrowLeft, User, UserCheck, UserX, Check, X, UserPlus, Trash2, Volume2, VolumeX, Lock, LogIn, MessageCircle, Search, CheckCheck } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase, getConversations, getPrivateMessages, sendPrivateMessage, markMessageAsRead, getFriends, getFriendshipStatus, acceptFriendRequest, rejectFriendRequest, getBlockedUsers, sendFriendRequest, deletePrivateMessage } from '../lib/supabase';
+import { supabase, getPrivateMessagesPage, sendPrivateMessage, markMessageAsRead, getFriends, getFriendshipStatus, acceptFriendRequest, rejectFriendRequest, getBlockedUsers, sendFriendRequest, deletePrivateMessage } from '../lib/supabase';
 import LoginModal from '../components/LoginModal';
 import RegisterModal from '../components/RegisterModal';
 
@@ -15,6 +14,9 @@ export default function MessagesPage() {
   const [othersConversations, setOthersConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
+  const PAGE_SIZE = 50;
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -35,6 +37,7 @@ export default function MessagesPage() {
   });
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const oldestLoadedAtRef = useRef(null);
   const channelRef = useRef(null);
   const typingChannelRef = useRef(null);
   const inputRef = useRef(null);
@@ -79,8 +82,19 @@ export default function MessagesPage() {
     }
   }, [selectedConversation?.user_id, currentUser?.id, blockedUsers]);
 
+  const isNearBottom = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return true;
+    const threshold = 80;
+    const distance = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    return distance < threshold;
+  };
+
   useEffect(() => {
-    scrollToBottom();
+    if (loadingOlder) return;
+    if (isNearBottom()) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   // Закриваємо emoji picker при кліку поза ним
@@ -105,21 +119,22 @@ export default function MessagesPage() {
     // Це допомагає оновити статус прочитання, якщо real-time не спрацював
     const pollInterval = setInterval(async () => {
       try {
-        const latestMessages = await getPrivateMessages(currentUser.id, selectedConversation.user_id);
-        // Оновлюємо повідомлення, якщо змінився статус прочитання
+        const latestMessages = await getPrivateMessagesPage({
+          userId: currentUser.id,
+          otherUserId: selectedConversation.user_id,
+          limit: PAGE_SIZE
+        });
         setMessages(prev => {
-          // Перевіряємо, чи змінився статус прочитання для наших повідомлень
-          const hasReadStatusChanged = prev.some(prevMsg => {
-            if (prevMsg.sender_id !== currentUser.id) return false; // Тільки для наших повідомлень
-            const latestMsg = latestMessages.find(m => m.id === prevMsg.id);
-            return latestMsg && latestMsg.read !== prevMsg.read;
+          const byId = new Map(prev.map(m => [m.id, m]));
+          latestMessages.forEach(m => {
+            if (byId.has(m.id)) {
+              byId.set(m.id, m);
+            } else {
+              byId.set(m.id, m);
+            }
           });
-          
-          if (hasReadStatusChanged || prev.length !== latestMessages.length) {
-            console.log('🔄 Polling detected changes, updating messages...');
-            return latestMessages;
-          }
-          return prev;
+          const merged = Array.from(byId.values()).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          return merged;
         });
       } catch (error) {
         console.error('Error polling messages:', error);
@@ -237,8 +252,9 @@ export default function MessagesPage() {
               if (exists) return prev;
               return [...prev, payload.new];
             });
-            // Прокручуємо вниз
-            setTimeout(() => scrollToBottom(), 100);
+            if (isNearBottom()) {
+              setTimeout(() => scrollToBottom(), 100);
+            }
           }
           // Оновлюємо список розмов
           await loadConversations();
@@ -271,7 +287,6 @@ export default function MessagesPage() {
               if (exists) return prev;
               return [...prev, payload.new];
             });
-            // Прокручуємо вниз
             setTimeout(() => scrollToBottom(), 100);
           }
           // Оновлюємо список розмов
@@ -483,15 +498,51 @@ export default function MessagesPage() {
         return;
       }
       
-      console.log('📥 Loading messages for conversation with:', otherUserId);
-      const data = await getPrivateMessages(currentUser.id, otherUserId);
-      console.log(`✅ Loaded ${data.length} messages, read status:`, data.filter(m => m.sender_id === currentUser.id).map(m => ({ id: m.id, read: m.read })));
+      const data = await getPrivateMessagesPage({ userId: currentUser.id, otherUserId, limit: PAGE_SIZE });
+      oldestLoadedAtRef.current = data.length > 0 ? data[0].created_at : null;
+      setHasMore(data.length === PAGE_SIZE);
       setMessages(data);
+      setTimeout(() => scrollToBottom(), 100);
       
       // Завантажуємо статус дружби
       await loadFriendshipStatus(otherUserId);
     } catch (error) {
       console.error('Error loading messages:', error);
+    }
+  };
+
+  const loadOlderMessages = async () => {
+    if (loadingOlder || !hasMore || !selectedConversation?.user_id || !currentUser?.id) return;
+    const el = messagesContainerRef.current;
+    const prevHeight = el ? el.scrollHeight : 0;
+    try {
+      setLoadingOlder(true);
+      const older = await getPrivateMessagesPage({
+        userId: currentUser.id,
+        otherUserId: selectedConversation.user_id,
+        limit: PAGE_SIZE,
+        before: oldestLoadedAtRef.current
+      });
+      if (older.length > 0) {
+        oldestLoadedAtRef.current = older[0].created_at;
+        setHasMore(older.length === PAGE_SIZE);
+        setMessages(prev => [...older, ...prev]);
+        setTimeout(() => {
+          if (el) el.scrollTop = el.scrollHeight - prevHeight;
+        }, 0);
+      } else {
+        setHasMore(false);
+      }
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  const handleScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    if (el.scrollTop < 40) {
+      loadOlderMessages();
     }
   };
 
@@ -794,9 +845,7 @@ export default function MessagesPage() {
       try {
         // Простий beep через HTML5 Audio (якщо є файл)
         // Або просто ігноруємо помилку
-      } catch (e) {
-        // Тихо ігноруємо
-      }
+      } catch { void 0; }
     }
   };
 
@@ -1269,6 +1318,7 @@ export default function MessagesPage() {
                 {/* Messages - скролиться тільки ця область */}
                 <div
                   ref={messagesContainerRef}
+                  onScroll={handleScroll}
                   className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 min-h-0 bg-white"
                 >
                   {messages.length === 0 ? (
