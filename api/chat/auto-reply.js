@@ -13,13 +13,14 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('CRITICAL: Missing Supabase credentials in .env');
-  throw new Error('Missing Supabase credentials');
-}
+    console.error('CRITICAL: Missing Supabase credentials in .env');
+    throw new Error('Missing Supabase credentials');
+  }
 
-if (!googleApiKey) {
-  console.error('CRITICAL: Missing GOOGLE_GENERATIVE_AI_API_KEY (or GOOGLE_API_KEY) in .env');
-}
+  if (!googleApiKey) {
+    console.error('CRITICAL: Missing GOOGLE_GENERATIVE_AI_API_KEY (or GOOGLE_API_KEY) in .env');
+    // We don't throw here to allow partial functionality, but AI will fail
+  }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -236,7 +237,12 @@ export default async function handler(request, response) {
        console.error('Generation Error:', genError);
        
        // Fallback response instead of 500
-       const fallbackText = "Вибач, щось пішло не так з моїм з'єднанням. Спробуй пізніше.";
+       let fallbackText = "Вибач, щось пішло не так з моїм з'єднанням. Спробуй пізніше.";
+
+       // DEBUG: Add specific error message to the response if it's an API key issue
+       if (genError.message && (genError.message.includes('API key') || genError.message.includes('400') || genError.message.includes('401'))) {
+          fallbackText += ` (Debug: ${genError.message})`;
+       }
        
        if (type === 'chat') {
           await supabase.from('messages').insert({
