@@ -182,14 +182,14 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
   };
 
   if (loading) {
-    return (
+    return createPortal(
       <AnimatePresence>
         <motion.div
           key="loading-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
@@ -206,7 +206,8 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
             </div>
           </motion.div>
         </motion.div>
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
     );
   }
 
@@ -239,7 +240,7 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
   const displayName = profile.full_name || 'Користувач';
   const initial = displayName.charAt(0).toUpperCase();
 
-  return (
+  return createPortal(
     <>
     <AnimatePresence mode="wait">
       <motion.div
@@ -247,14 +248,14 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.96, opacity: 0, y: 12 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.96, opacity: 0, y: 12 }}
-          transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
           className="bg-white rounded-[32px] shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
         >
@@ -503,6 +504,6 @@ export default function UserProfileModal({ userId, onClose, onShowLogin, onShowR
       </div>,
       document.body
     )}
-  </>
+  </>, document.body
   );
 }

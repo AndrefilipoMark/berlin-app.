@@ -8,6 +8,12 @@ export const HOUSING_PHOTOS = {
   compressMaxWidthOrHeight: 1920,
 };
 
+/** Ліміти фото подій (суворіше стиснення) */
+export const EVENT_PHOTOS = {
+  maxSizeMB: 0.8,
+  maxWidthOrHeight: 1280,
+};
+
 /** Стиснення аватара перед завантаженням */
 export const AVATAR_COMPRESS = {
   maxSizeMB: 0.5,
@@ -59,4 +65,10 @@ export const BERLIN_DISTRICTS = [
   'Marzahn-Hellersdorf',
   'Lichtenberg',
   'Reinickendorf',
+];
+
+export const ADMIN_EMAILS = [
+  'andrefilipoua@gmail.com',
+  'test@example.com',
+  'admin@berlin-app.com',
 ];

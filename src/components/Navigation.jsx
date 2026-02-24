@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Briefcase, Building2, MessageCircle, MessageSquare, BookOpen, LogIn, LogOut, User, Shield, Bell, Settings, Heart } from 'lucide-react';
+import { Home, Briefcase, Building2, MessageCircle, MessageSquare, BookOpen, LogIn, LogOut, User, Users, Shield, Bell, Settings, Heart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase, updateLastSeen, getFriendRequests, getUnreadMessagesCount, ensureProfile } from '../lib/supabase';
@@ -18,7 +18,7 @@ const navItems = [
   { path: '/jobs', label: 'Вакансії', icon: Briefcase, color: 'primary' },
   { path: '/housing', label: 'Житло', icon: Building2, color: 'primary' },
   { path: '/services', label: 'Послуги', icon: BookOpen, color: 'primary' },
-  { path: '/forum', label: 'Форум', icon: MessageCircle, color: 'primary' },
+  { path: '/community', label: 'Спільнота', icon: Users, color: 'primary' },
   { path: '/chat', label: 'Чат', icon: MessageSquare, color: 'primary' },
 ];
 

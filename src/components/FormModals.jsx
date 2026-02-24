@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { X, Briefcase, Home, Stethoscope, MessageCircle, Building2, BookOpen, ImagePlus, Trash2, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase, createJob, createHousing, updateHousing, uploadHousingPhoto, createService, createForumPost } from '../lib/supabase';
@@ -819,10 +820,13 @@ export function ForumPostFormModal({ onClose }) {
       
       // Trigger Auto Reply for Forum
       const content = (postData.title + ' ' + postData.content).toLowerCase();
-      const delay = 15000 + Math.random() * 30000;
+      // Wait 5-15 seconds (to look like reading)
+      const delay = 5000 + Math.random() * 10000;
+      
       setTimeout(async () => {
         try {
-          await fetch('http://localhost:3000/api/chat/auto-reply', {
+          // Use relative path for production compatibility
+          await fetch('/api/chat/auto-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -833,6 +837,7 @@ export function ForumPostFormModal({ onClose }) {
               postId: created.id
             })
           });
+          console.log('[Forum] Auto-reply triggered');
           emitEvent(Events.FORUM_POST_ADDED); // Refresh to show reply
         } catch (e) {
           console.error('Forum auto-reply failed:', e);
@@ -900,32 +905,35 @@ export function ForumPostFormModal({ onClose }) {
 
 // Reusable Components
 function FormModalContainer({ title, icon: Icon, iconColor, onClose, children }) {
-  return (
-    <motion.div
-      initial={{ scale: 0.9, y: 20 }}
-      animate={{ scale: 1, y: 0 }}
-      exit={{ scale: 0.9, y: 20 }}
-      onClick={(e) => e.stopPropagation()}
-      className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center`}>
-            <Icon size={24} className={iconColor || "text-primary"} />
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center`}>
+              <Icon size={24} className={iconColor || "text-primary"} />
+            </div>
+            <h2 className="text-2xl font-extrabold text-gray-900">{title}</h2>
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900">{title}</h2>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors"
-        >
-          <X size={20} className="text-gray-600" />
-        </button>
-      </div>
 
-      {children}
-    </motion.div>
+        {children}
+      </motion.div>
+    </div>,
+    document.body
   );
 }
 

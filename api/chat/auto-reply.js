@@ -37,13 +37,13 @@ const BOTS = {
     2. MEMORY: Use CHAT HISTORY. If user just said "Steglitz", remember they are looking for a DENTIST from previous messages!
     3. IF ASKED FOR SERVICES (Doctors, Lawyers, Beauty, etc):
        - YOU MUST SAY: "Подивись у нас на сайті в розділі 'Послуги' (Services). Там є всі контакти і адреси!"
-       - You can mention "Dr. Gennady Esterov" as an example if asked for a dentist.
+       - DO NOT invent specific addresses or clinic names.
     4. Don't ask too many follow-up questions. If they want a dentist, GIVE THEM THE ANSWER (check 'Services' tab).`
   },
   TANYUSHA: {
     id: '00000000-0000-0000-0000-000000000002',
     name: 'Танюша Ші 🌸',
-    keywords: ['дитина', 'діти', 'лікар', 'школа', 'садок', 'сумно', 'депресія', 'порадьте', 'краса', 'манікюр', 'кафе', 'ресторан', 'їжа', 'ліки', 'привіт всім', 'привіт усім', 'вітаю всіх', 'питання', 'допомога', 'хтось', 'живий', 'ау', 'підкажіть', 'знає', 'стоматолог', 'зуб'],
+    keywords: ['дитина', 'діти', 'лікар', 'школа', 'садок', 'сумно', 'депресія', 'порадьте', 'краса', 'манікюр', 'кафе', 'ресторан', 'їжа', 'ліки', 'привіт всім', 'привіт усім', 'вітаю всіх', 'питання', 'допомога', 'хтось', 'живий', 'ау', 'підкажіть', 'знає', 'стоматолог', 'зуб', 'церква', 'храм', 'бог'],
     systemPrompt: `You are Tanya, a 30-year-old Ukrainian woman living in Berlin.
     Persona: Volunteer coordinator, helpful friend.
     Tone: Friendly, empathetic.
@@ -52,7 +52,7 @@ const BOTS = {
     2. MEMORY: Use CHAT HISTORY. If user says "Steglitz", remember they need a DENTIST.
     3. CRITICAL INSTRUCTION: If user asks for doctors, beauty, or restaurants:
        - YOU MUST SAY: "Зайди в розділ 'Послуги' (Services) у нас на сайті! Там зібрані всі перевірені українські майстри та лікарі."
-       - You can add: "Наприклад, там є контакти чудових стоматологів."
+       - DO NOT invent specific addresses or clinic names.
        - DO NOT just ask "what district?" again and again. Direct them to the website section!`
   }
 };
@@ -110,6 +110,12 @@ export default async function handler(request, response) {
       selectedBot = BOTS.TANYUSHA;
     } else if (isAndriy && isTanyusha) {
       selectedBot = Math.random() > 0.5 ? BOTS.ANDRIY : BOTS.TANYUSHA;
+    }
+
+    // 6. FORUM FALLBACK (If it's a forum reply and no bot selected, default to Tanyusha)
+    if (!selectedBot && type === 'forum_reply') {
+       console.log('Forum fallback: defaulting to Tanyusha');
+       selectedBot = BOTS.TANYUSHA;
     }
     
     // 3. Fetch Chat History for Context (Last 30 messages)
@@ -182,7 +188,7 @@ export default async function handler(request, response) {
       - Provide the answer/advice PUBLICLY right here.
       - Do NOT offer to send private messages (DM/PM). 
       - Do NOT ask the user to contact you privately.
-      - If recommending a doctor/service, invent a realistic plausible recommendation in Berlin (e.g. "Praxis am Alex", "Dr. Müller in Mitte") or general advice.`;
+      - If recommending a doctor/service, DO NOT invent specific names or addresses. Instead, say: "Перевір розділ 'Послуги' на нашому сайті, там є перевірені контакти." or give general advice about how to find it in Berlin (e.g. "search on Google Maps for...").`;
     }
     // Generate response
     console.log('Generating response for bot:', selectedBot.name);

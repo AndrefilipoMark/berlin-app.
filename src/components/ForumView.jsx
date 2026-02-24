@@ -14,8 +14,10 @@ import {
   Edit2,
   Trash2,
   X,
+  Plus,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   supabase,
   getForumPosts,
@@ -30,11 +32,12 @@ import {
   deleteForumReply,
   updateForumPost,
 } from '../lib/supabase';
-import UserProfileModal from '../components/UserProfileModal';
-import ForumCard from '../components/ForumCard';
-import GuestGuard from '../components/GuestGuard';
-import LoginModal from '../components/LoginModal';
-import RegisterModal from '../components/RegisterModal';
+import UserProfileModal from './UserProfileModal';
+import ForumCard from './ForumCard';
+import { ForumPostFormModal } from './FormModals';
+import GuestGuard from './GuestGuard';
+import LoginModal from './LoginModal';
+import RegisterModal from './RegisterModal';
 import { onEvent, Events, emitEvent } from '../lib/events';
 
 const FORUM_CATEGORIES = [
@@ -44,7 +47,7 @@ const FORUM_CATEGORIES = [
   { id: 'announcement', label: 'Оголошення', icon: Megaphone },
 ];
 
-export default function ForumPage() {
+export default function ForumView() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -65,6 +68,7 @@ export default function ForumPage() {
   const [submittingEdit, setSubmittingEdit] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showGuestGuard, setShowGuestGuard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -148,35 +152,6 @@ export default function ForumPage() {
       console.warn('Error loading replies:', e);
       setReplies([]);
     }
-  };
-
-  const triggerAutoReply = async (post, authorName) => {
-    // 1. Guess the bot based on post content
-    const content = (post.title + ' ' + post.content).toLowerCase();
-    
-    // 2. Wait 15-45 seconds (to look like reading)
-    const delay = 15000 + Math.random() * 30000;
-    setTimeout(async () => {
-      try {
-        await fetch('http://localhost:3000/api/chat/auto-reply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: content,
-            userId: post.user_id,
-            userName: authorName,
-            type: 'forum_reply',
-            postId: post.id
-          })
-        });
-        // Reload replies if current post is open
-        if (selectedPost?.id === post.id) {
-           loadReplies(post.id);
-        }
-      } catch (e) {
-        console.error('Forum auto-reply failed:', e);
-      }
-    }, delay);
   };
 
   const handlePostClick = async (post) => {
@@ -339,55 +314,43 @@ export default function ForumPage() {
     return matchCat;
   });
 
+  const handleCreateClick = () => {
+    if (!user) {
+      setShowGuestGuard(true);
+      return;
+    }
+    setShowCreateModal(true);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-gray-50/50 to-blue-50/30 p-4 md:p-8">
-      <div className="max-w-[1400px] mx-auto">
-        {/* Page Header */}
-        <div className="mb-6 md:mb-8 text-center md:text-left">
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 md:mb-4"
-          >
-            Форум спільноти
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-base md:text-lg text-gray-600 max-w-2xl"
-          >
-            Запитуйте, діліться досвідом та допомагайте іншим українцям у Берліні.
-          </motion.p>
+    <div className="space-y-6">
+      {/* Category Filters */}
+      <div className="mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          {FORUM_CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center justify-center gap-2 h-11 px-3 py-3 md:py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 w-full ${
+                  isActive
+                    ? 'bg-primary text-white shadow-md shadow-blue-600/20'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Icon size={18} className={isActive ? 'text-white' : 'text-gray-500'} />
+                <span className="truncate">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Category Filters */}
-        <div className="mb-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            {FORUM_CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const isActive = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center justify-center gap-2 h-11 px-3 py-3 md:py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 w-full ${
-                    isActive
-                      ? 'bg-primary text-white shadow-md shadow-blue-600/20'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                  }`}
-                >
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-gray-500'} />
-                  <span className="truncate">{cat.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Main layout */}
-        <div className="space-y-6">
-          {selectedPost && (
+      {/* Main layout */}
+      <div className="space-y-6">
+        {selectedPost && (
             <motion.div
               ref={detailBlockRef}
               initial={{ opacity: 0, y: 10 }}
@@ -707,11 +670,10 @@ export default function ForumPage() {
               </div>
             </>
           )}
-        </div>
       </div>
 
-      {editingPost && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60" onClick={() => setEditingPost(null)}>
+      {editingPost && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEditingPost(null)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -775,7 +737,8 @@ export default function ForumPage() {
               </button>
             </div>
           </motion.div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showUserModal && selectedUserId && (
@@ -808,6 +771,24 @@ export default function ForumPage() {
           onSwitchToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }}
         />
       )}
+      
+      {showCreateModal && (
+        <ForumPostFormModal 
+          onClose={() => setShowCreateModal(false)} 
+        />
+      )}
+
+      {/* Mobile FAB replaced with consistent desktop FAB */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={handleCreateClick}
+        className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-40 w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-2xl transition-all group"
+      >
+        <MessageCircle size={28} className="text-white transition-transform group-hover:scale-110" strokeWidth={3} />
+      </motion.button>
     </div>
   );
 }

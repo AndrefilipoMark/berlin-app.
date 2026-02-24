@@ -1679,6 +1679,133 @@ export const unblockUser = async (userId, blockedUserId) => {
   }
 };
 
+// =====================================================
+// EVENTS FUNCTIONS
+// =====================================================
+
+export const getEvents = async () => {
+  try {
+    // Only show events from yesterday onwards
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    // Get events, their RSVPs, and author info
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        event_rsvp (
+          user_id,
+          status
+        ),
+        profiles!user_id (
+          full_name,
+          avatar_url,
+          email
+        )
+      `)
+      .order('event_date', { ascending: true })
+      .gte('event_date', yesterday);
+    
+    if (error) throw error;
+    
+    // Process RSVPs to get counts
+    return (data ?? []).map(event => {
+      const rsvps = event.event_rsvp || [];
+      return {
+        ...event,
+        author: event.profiles, // map profile to author
+        going_count: rsvps.filter(r => r.status === 'going').length,
+        maybe_count: rsvps.filter(r => r.status === 'maybe').length,
+        // Keep raw rsvp data for finding current user status if needed, or filter it
+        event_rsvp: rsvps 
+      };
+    });
+  } catch (e) {
+    console.warn('getEvents error:', e);
+    return [];
+  }
+};
+
+export const createEvent = async (eventData) => {
+  const { data, error } = await supabase
+    .from('events')
+    .insert([eventData])
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateEvent = async (eventId, eventData) => {
+  const { data, error } = await supabase
+    .from('events')
+    .update(eventData)
+    .eq('id', eventId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const deleteEvent = async (eventId) => {
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId);
+
+  if (error) throw error;
+};
+
+export const getEventRSVPs = async (eventId) => {
+  try {
+    // Note: requires FK from event_rsvp.user_id to profiles.id
+    const { data, error } = await supabase
+      .from('event_rsvp')
+      .select('user_id, status, profiles!user_id(full_name, avatar_url)')
+      .eq('event_id', eventId);
+
+    if (error) throw error;
+    return data ?? [];
+  } catch (e) {
+    console.warn('getEventRSVPs error:', e);
+    return [];
+  }
+};
+
+export const updateEventRSVP = async (eventId, userId, status) => {
+  // Upsert logic
+  const { data, error } = await supabase
+    .from('event_rsvp')
+    .upsert({ event_id: eventId, user_id: userId, status }, { onConflict: 'event_id, user_id' })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+const EVENT_PHOTOS_BUCKET = 'event-photos';
+
+export const uploadEventPhoto = async (file, userId) => {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const unique = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const path = `${userId}/${unique}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(EVENT_PHOTOS_BUCKET)
+    .upload(path, file, { cacheControl: '3600', upsert: false });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(EVENT_PHOTOS_BUCKET)
+    .getPublicUrl(path);
+
+  return publicUrl;
+};
+
 /** Відправити запит на видалення акаунту адміну (зберігає в admin_messages) */
 export const requestAccountDeletion = async (userData) => {
   const { error } = await supabase.from('admin_messages').insert({

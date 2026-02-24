@@ -28,8 +28,6 @@ export default function FAB() {
         return { show: true, action: 'housing', icon: Home, color: 'bg-primary' };
       case '/services':
         return { show: true, action: 'service', icon: BookOpen, color: 'bg-primary' };
-      case '/forum':
-        return { show: true, action: 'forum', icon: MessageCircle, color: 'bg-primary' };
       default:
         return { show: false, action: null, icon: Plus, color: 'bg-primary' };
     }
@@ -121,7 +119,6 @@ export default function FAB() {
                 {formType === 'job' && <JobFormModal onClose={closeFormModal} />}
                 {formType === 'housing' && <HousingFormModal onClose={closeFormModal} />}
                 {formType === 'service' && <ServiceFormModal onClose={closeFormModal} />}
-                {formType === 'forum' && <ForumPostFormModal onClose={closeFormModal} />}
               </motion.div>
             </motion.div>
           )}

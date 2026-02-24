@@ -1,5 +1,5 @@
 import imageCompression from 'browser-image-compression';
-import { HOUSING_PHOTOS, AVATAR_COMPRESS } from './constants';
+import { HOUSING_PHOTOS, AVATAR_COMPRESS, EVENT_PHOTOS } from './constants';
 
 /**
  * Стискає зображення перед завантаженням у Storage.
@@ -18,6 +18,27 @@ export async function compressHousingImage(file) {
     return new File([compressed], file.name, { type: compressed.type });
   } catch (e) {
     console.warn('[compressHousingImage]', e);
+    return file;
+  }
+}
+
+/**
+ * Стискає фото події перед завантаженням.
+ * Повертає File; при помилці — оригінальний file.
+ */
+export async function compressEventImage(file) {
+  if (!file?.type?.startsWith('image/')) return file;
+  try {
+    const opts = {
+      maxSizeMB: EVENT_PHOTOS.maxSizeMB,
+      maxWidthOrHeight: EVENT_PHOTOS.maxWidthOrHeight,
+      useWebWorker: true,
+      preserveExif: false,
+    };
+    const compressed = await imageCompression(file, opts);
+    return new File([compressed], file.name, { type: compressed.type });
+  } catch (e) {
+    console.warn('[compressEventImage]', e);
     return file;
   }
 }

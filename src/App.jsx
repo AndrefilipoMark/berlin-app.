@@ -11,7 +11,7 @@ import HousingPage from './pages/HousingPage';
 import HousingDetailPage from './pages/HousingDetailPage';
 import ServicesPage from './pages/ServicesPage';
 import ServicesDetailPage from './pages/ServicesDetailPage';
-import ForumPage from './pages/ForumPage';
+import CommunityPage from './pages/CommunityPage';
 import ChatPage from './pages/ChatPage';
 import AdminPage from './pages/AdminPage';
 import ProfileSettings from './pages/ProfileSettings';
@@ -123,6 +123,16 @@ function AnimatedRoutes() {
             <ServicesDetailPage />
           </motion.div>
         } />
+        <Route path="/community" element={
+          <motion.div
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <CommunityPage />
+          </motion.div>
+        } />
         <Route path="/forum" element={
           <motion.div
             variants={pageVariants}
@@ -130,7 +140,7 @@ function AnimatedRoutes() {
             animate="animate"
             exit="exit"
           >
-            <ForumPage />
+            <CommunityPage />
           </motion.div>
         } />
         <Route path="/chat" element={

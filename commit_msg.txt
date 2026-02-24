@@ -1,5 +1,0 @@
-Update debug page with API key validation
-
-- Added strict validation for Supabase Anon Key format (JWT check)
-- Added warning messages for incorrect key formats
-- Improved error display and instructions
