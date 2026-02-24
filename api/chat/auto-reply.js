@@ -82,9 +82,15 @@ export default async function handler(request, response) {
     const isTanyusha = BOTS.TANYUSHA.keywords.some(k => lowerMsg.includes(k));
     
     // Greeting detection (Hello everyone)
-    // Updated to catch "доброго вечора" (includes 'добр') and generic "хтось є"
     const isGreeting = (lowerMsg.includes('привіт') || lowerMsg.includes('вітаю') || lowerMsg.includes('добр')) && 
                        (lowerMsg.includes('всім') || lowerMsg.includes('усім') || lowerMsg.includes('всіх') || lowerMsg.includes('народ') || lowerMsg.includes('хтось') || lowerMsg.includes('люди'));
+
+    // NEW: Small talk / Short greetings
+    const isShortGreeting = lowerMsg.trim() === 'привіт' || 
+                           lowerMsg.trim() === 'привет' || 
+                           lowerMsg.trim() === 'добрий день' || 
+                           lowerMsg.trim() === 'є хтось?' || 
+                           lowerMsg.trim() === 'є хто?';
 
     // Bot Selection Logic (MOVED UP)
     // 1. If Replying to a specific bot -> FORCE that bot
@@ -94,7 +100,7 @@ export default async function handler(request, response) {
        selectedBot = BOTS.TANYUSHA;
     }
     // 2. Greetings -> Tanyusha
-    else if (isGreeting) {
+    else if (isGreeting || isShortGreeting) {
        selectedBot = BOTS.TANYUSHA;
     }
     // 3. Explicit Mentions (Override keywords)

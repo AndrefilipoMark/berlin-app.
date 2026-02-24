@@ -99,28 +99,11 @@ export default function FAB() {
       {createPortal(
         <AnimatePresence>
           {showForm && formType && (
-            <motion.div
-              key={`form-modal-${formType}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) closeFormModal();
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl"
-              >
-                {formType === 'job' && <JobFormModal onClose={closeFormModal} />}
-                {formType === 'housing' && <HousingFormModal onClose={closeFormModal} />}
-                {formType === 'service' && <ServiceFormModal onClose={closeFormModal} />}
-              </motion.div>
-            </motion.div>
+            <>
+              {formType === 'job' && <JobFormModal onClose={closeFormModal} />}
+              {formType === 'housing' && <HousingFormModal onClose={closeFormModal} />}
+              {formType === 'service' && <ServiceFormModal onClose={closeFormModal} />}
+            </>
           )}
         </AnimatePresence>,
         document.body

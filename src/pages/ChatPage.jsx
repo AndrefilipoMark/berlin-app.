@@ -529,6 +529,12 @@ export default function ChatPage() {
     const isGreeting = (lowerMsg.includes('привіт') || lowerMsg.includes('вітаю') || lowerMsg.includes('добр')) && 
                        (lowerMsg.includes('всім') || lowerMsg.includes('усім') || lowerMsg.includes('всіх') || lowerMsg.includes('народ') || lowerMsg.includes('хтось') || lowerMsg.includes('люди'));
 
+    const isShortGreeting = lowerMsg.trim() === 'привіт' || 
+                           lowerMsg.trim() === 'привет' || 
+                           lowerMsg.trim() === 'добрий день' || 
+                           lowerMsg.trim() === 'є хтось?' || 
+                           lowerMsg.trim() === 'є хто?';
+
     // Mention detection
     const mentionsAndriy = lowerMsg.includes('андрій') || lowerMsg.includes('andriy');
     const mentionsTanyusha = lowerMsg.includes('танюша') || lowerMsg.includes('таня') || lowerMsg.includes('tanyusha') || lowerMsg.includes('тання');
@@ -568,7 +574,7 @@ export default function ChatPage() {
     // 3. Conversation Context (Last Speaker) - "Sticky" bot
     // Only applies if no other strong signal contradicts it (e.g. greeting everyone)
     // AND message doesn't say "not you"
-    else if (lastBotSpeaker && !isGreeting) {
+    else if (lastBotSpeaker && !isGreeting && !isShortGreeting) {
        const isNegative = lowerMsg.includes('не тобі') || lowerMsg.includes('не тебе');
        if (!isNegative) {
           botName = lastBotSpeaker;
@@ -576,7 +582,7 @@ export default function ChatPage() {
     }
 
     // 4. Greeting -> Tanyusha
-    else if (isGreeting) botName = BOT_CONFIG.TANYUSHA.name;
+    else if (isGreeting || isShortGreeting) botName = BOT_CONFIG.TANYUSHA.name;
     
     // 5. Keywords
     else if (isAndriyKeyword && !isTanyushaKeyword) botName = BOT_CONFIG.ANDRIY.name;
